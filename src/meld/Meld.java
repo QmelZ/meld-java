@@ -99,7 +99,7 @@ public class Meld extends Mod{
                 Tile t = Vars.world.tile(current.x + o.x, current.y + o.y);
                 if(t == null) continue;
 
-                if(current.overlay() == activeOverlay && t.floor() == unstable || current.floor() == t.floor()){
+                if(current.overlay() == activeOverlay && (t.floor() == unstable || current.floor() == t.floor())){
                     activeBuffer.add(t.pos());
                 }
             };

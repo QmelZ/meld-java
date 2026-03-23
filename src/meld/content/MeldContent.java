@@ -28,13 +28,15 @@ public class MeldContent {
 
     public static Block chute, chuteRouter, chuteBridge, chuteJunction, chuteOverflow;
 
-    public static Block sonarSpire, movementAnchor;
+    public static Block sonarSpire, movementAnchor, nullifier;
 
     public static Block coreRaft, elementalBlaster, earthboundInfuser;
 
     public static Block channelNode, channelFace, aspectOutlet;
 
     public static Block sunder, molotov, vivisection;
+
+    public static Block meldSuppressor;
 
     public static StatusEffect rally, anchored;
 
@@ -195,6 +197,12 @@ public class MeldContent {
             );
         }};
 
+        nullifier = new Nullifier("nullifier"){{
+            requirements(Category.effect, with(debris, 60));
+            size = 5;
+            health = 300;
+        }};
+
         chute = new Duct("chute"){{
             requirements(Category.distribution, with(debris, 1));
             health = 90;
@@ -229,6 +237,10 @@ public class MeldContent {
             health = 90;
             speed = 4f;
             solid = false;
+        }};
+
+        meldSuppressor = new MeldNode("meld-suppressor"){{
+            size = 3;
         }};
     }
 }
