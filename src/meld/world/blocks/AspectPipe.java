@@ -2,7 +2,6 @@ package meld.world.blocks;
 
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
-import meld.content.MeldContent;
 import meld.content.MeldLiquids;
 import mindustry.Vars;
 import mindustry.gen.Building;

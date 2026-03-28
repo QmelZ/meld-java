@@ -41,10 +41,7 @@ import mindustry.world.meta.Attribute;
 
 import static mindustry.type.ItemStack.with;
 
-public class MeldContent {
-
-    public static Attribute aetherAttr;
-
+public class MeldBlocks {
 
     //Strata blocks first
     public static Block chute, chuteRouter, chuteBridge, chuteJunction, chuteOverflow;
@@ -74,8 +71,6 @@ public class MeldContent {
     }
 
     public static void load(){
-
-        aetherAttr = Attribute.add("aether");
 
         channelFace = new LiquidJunction("channel-face"){{
             requirements(Category.liquid, with(
@@ -461,7 +456,7 @@ public class MeldContent {
 
             health = 300;
 
-            attribute = aetherAttr;
+            attribute = MeldAttributes.aetherAttr;
             baseEfficiency = 0;
             minEfficiency = 8.9f;
             maxBoost = 2;

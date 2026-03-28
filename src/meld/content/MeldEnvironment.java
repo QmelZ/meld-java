@@ -270,13 +270,13 @@ public class MeldEnvironment {
 
         aetherGrowth = new SteamVent("aether-growth"){{
             variants = 0;
-            attributes.set(MeldContent.aetherAttr, 1);
+            attributes.set(MeldAttributes.aetherAttr, 1);
             blendGroup = parent = softSand;
         }};
 
         metalWeaveAether = new SteamVent("metal-weave-aether"){{
             variants = 0;
-            attributes.set(MeldContent.aetherAttr, 1);
+            attributes.set(MeldAttributes.aetherAttr, 1);
             blendGroup = parent = metalWeave;
         }};
 
