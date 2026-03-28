@@ -1,4 +1,4 @@
-package meld.type.unit;
+package meld.entities.unit;
 
 import arc.util.Log;
 import mindustry.entities.EntityCollisions;

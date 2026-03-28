@@ -1,4 +1,4 @@
-package meld.type.weapons;
+package meld.entities.unit.weapons;
 
 import mindustry.type.Weapon;
 

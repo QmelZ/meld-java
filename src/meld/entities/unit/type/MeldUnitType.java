@@ -1,4 +1,4 @@
-package meld.type.unit;
+package meld.entities.unit.type;
 
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
