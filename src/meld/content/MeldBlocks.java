@@ -2,7 +2,6 @@ package meld.content;
 
 import arc.graphics.Color;
 import arc.math.Interp;
-import arc.util.Log;
 import meld.*;
 import meld.entities.bullet.OutflowBulletType;
 import meld.entities.bullet.TransitionBulletType;
@@ -10,10 +9,10 @@ import meld.graphics.*;
 import meld.world.blocks.*;
 import meld.world.blocks.crafting.ModularCrafter;
 import meld.world.blocks.crafting.ItemRecipe;
-import meld.world.blocks.crafting.Recipe;
 import meld.world.blocks.crafting.modules.*;
 import meld.world.blocks.crafting.modules.GateModule.ConsumeCondition;
 import meld.world.blocks.crafting.modules.GateModule.OutputCondition;
+import meld.world.blocks.production.SingleBeamDrill;
 import meld.world.meta.*;
 import mindustry.Vars;
 import mindustry.content.Fx;
@@ -31,6 +30,7 @@ import mindustry.graphics.Layer;
 import mindustry.type.*;
 import mindustry.world.Block;
 import mindustry.world.blocks.defense.ForceProjector;
+import mindustry.world.blocks.defense.RegenProjector;
 import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.defense.turrets.LiquidTurret;
@@ -52,15 +52,24 @@ public class MeldBlocks {
     //Strata blocks first
     public static Block chute, chuteRouter, chuteBridge, chuteJunction, unloadingHub;
 
-    public static Block sonarSpire, movementAnchor, nullifier;
+    public static Block sonarSpire, movementAnchor, nullifier,
+            //Bruiskit: Targets largest, highest hp blocks, functional blocks first, continuously heals
 
-    public static Block coreRaft, aetherAccumulator, elementalBlaster, earthboundInfuser, sharkFactory;
+            //Gauze chainheals smallest, lowest hp blocks, low target prio blocks first.
 
-    public static ModularCrafter gasKiln, rotaryKiln;
+            //Suture shoots healing needles in a cone at the closest damaged block. Impales enemies, causing them to take constant chip damage and be sedated.
+            bruisekit, gauze, suture;
 
-    public static Block channelNode, channelFace, aspectOutlet, aspectPipe;
+    public static Block coreRaft, aetherAccumulator, elementalBlaster, pneumaticPulsear,
+            earthboundInfuser, sharkFactory;
+
+    public static ModularCrafter gasKiln, rotaryKiln, pneumaticExtruder;
+
+    public static Block channelNode, channelFace, aspectOutlet, aspectChannel;
 
     public static Block sunder, molotov, vivisection;
+
+    public static Block silverHusk, shadesteelShingles;
 
     //Meld blocks
     public static Block pipeline, pipelineRouter, pipelineCrossing, pipelineBridge,
@@ -129,7 +138,7 @@ public class MeldBlocks {
             outputLiquid = new LiquidStack(MeldLiquids.aspect, outletRate);
         }};
 
-        aspectPipe = new AspectPipe("aspect-pipe"){{
+        aspectChannel = new AspectPipe("aspect-channel"){{
             requirements(Category.liquid, with(
                     MeldItems.annealedSilver, 5, MeldItems.glassMallows, 2
             ));
@@ -298,146 +307,177 @@ public class MeldBlocks {
             inaccuracy = 2;
             shootCone = 5;
 
-            ammoTypes.put(
-                    MeldItems.silver,
-                    new OutflowBulletType(){{
-                        //HHJKGHJGJK.
-                        collidesTiles = false;
-                        collides = false;
-                        collidesAir = false;
-                        scaleLife = true;
-                        hitShake = 1.0F;
-                        hitSound = Sounds.explosionArtillery;
-                        hitEffect = Fx.flakExplosion;
-                        shootEffect = Fx.shootBig;
-                        shrinkX = 0.25f;
-                        shrinkY = 0.8f;
-                        shrinkInterp = Interp.slope;
-                        trailEffect = Fx.artilleryTrail;
-                        trailChance = 0.35f;
+            BulletType molBullet = new OutflowBulletType(){{
+                //HHJKGHJGJK.
+                collidesTiles = false;
+                collides = false;
+                collidesAir = false;
+                scaleLife = true;
+                hitShake = 1.0F;
+                hitSound = Sounds.explosionArtillery;
+                hitEffect = Fx.flakExplosion;
+                shootEffect = Fx.shootBig;
+                shrinkX = 0.25f;
+                shrinkY = 0.8f;
+                shrinkInterp = Interp.slope;
+                trailEffect = Fx.artilleryTrail;
+                trailChance = 0.35f;
 
-                        speed = 7;
+                speed = 7;
+                damage = 1;
+                lifetime = 46;
+                width = 18;
+                height = 24;
+                status = MeldStatusEffects.aspectBurn;
+                statusDuration = 300;
+                frontColor = Color.white;
+                backColor = Color.valueOf("cbdbfc");
+
+                splashDamage = 4;
+                splashDamageRadius = 8;
+
+                collidesTiles = false;
+                makeFire = true;
+                hitShake = 2.5f;
+
+                despawnHit = true;
+                fragOnAbsorb = false;
+                trailColor = Color.valueOf("cbdbfc");
+                ammoMultiplier = 1;
+                fragBullets = 24;
+                fragVelocityMin = 0.8f;
+                fragVelocityMax = 1;
+                fragLifeMin = 0.6f;
+
+                fragRandomSpread = 360;
+
+                outflowBullet = new ExplosionBulletType(){{
+                    hitEffect = despawnEffect = Fx.none;
+                    damage = splashDamage = 0;
+                    fragBullets = 3;
+                    fragRandomSpread = 15;
+                    fragLifeMin = 0.5f;
+                    killShooter = false;
+
+                    fragBullet = new BasicBulletType() {{
+                        lightRadius = 0;
+                        speed = 8.5f;
+                        drag = 0.03f;
+                        damage = 2;
+                        lifetime = 25;
+                        pierce = true;
+                        pierceCap = 4;
+                        removeAfterPierce = true;
+                        pierceArmor = true;
+                        absorbable = false;
+
+
+                        width = 7;
+                        height = 16;
+                        shrinkX = 1;
+                        shrinkY = 1;
+                        frontColor = Color.white;
+                        backColor = Color.valueOf("cbdbfc");
+                        splashDamage = 3;
+                        splashDamageRadius = 8;
+                        makeFire = true;
+                        collidesAir = false;
+                        despawnHit = false;
+                        hitEffect = despawnEffect = Fx.none;
+
+                        knockback = 0.35f;
+                        impact = true;
+                    }};
+                }};
+
+                fragBullet = new BasicBulletType(){{
+                    lightRadius = 0;
+                    speed = 4.5f;
+                    drag = 0.04f;
+                    damage = 2;
+                    lifetime = 20;
+                    pierce = true;
+                    pierceCap = 2;
+                    pierceArmor = true;
+                    absorbable = false;
+
+
+                    width = 9;
+                    height = 13;
+                    shrinkX = 1;
+                    shrinkY = 1;
+                    status = StatusEffects.burning;
+                    statusDuration = 120;
+                    frontColor = Color.white;
+                    backColor = Color.valueOf("cbdbfc");
+                    splashDamage = 5;
+                    splashDamageRadius = 8;
+                    makeFire = true;
+                    collidesAir = false;
+                    despawnHit = false;
+                    hitEffect = despawnEffect = Fx.none;
+
+                    knockback = 0.35f;
+                    impact = true;
+
+                    fragRandomSpread = 0;
+                    fragBullets = 1;
+                    fragBullet = new BasicBulletType(){{
+                        width = height = 2;
+                        speed = 6;
+                        lifetime = 8;
+
+                        shrinkX = shrinkY = 1;
+                        shrinkInterp = Interp.pow2In;
+
                         damage = 1;
-                        lifetime = 46;
-                        width = 18;
-                        height = 24;
-                        status = MeldStatusEffects.aspectBurn;
-                        statusDuration = 300;
+                        pierce = true;
+                        sticky = true;
+                        stickyExtraLifetime = 60;
+
                         frontColor = Color.white;
                         backColor = Color.valueOf("cbdbfc");
 
-                        splashDamage = 4;
-                        splashDamageRadius = 8;
-
-                        collidesTiles = false;
-                        makeFire = true;
-                        hitShake = 2.5f;
-
-                        despawnHit = true;
-                        fragOnAbsorb = false;
-                        trailColor = Color.valueOf("cbdbfc");
-                        ammoMultiplier = 1;
-                        fragBullets = 24;
-                        fragVelocityMin = 0.8f;
-                        fragVelocityMax = 1;
-                        fragLifeMin = 0.6f;
-
-                        fragRandomSpread = 360;
-
-                        outflowBullet = new ExplosionBulletType(){{
-                                hitEffect = despawnEffect = Fx.none;
-                                damage = splashDamage = 0;
-                                fragBullets = 3;
-                                fragRandomSpread = 15;
-                                fragLifeMin = 0.5f;
-                                killShooter = false;
-
-                                fragBullet = new BasicBulletType() {{
-                                    lightRadius = 0;
-                                    speed = 8.5f;
-                                    drag = 0.03f;
-                                    damage = 2;
-                                    lifetime = 25;
-                                    pierce = true;
-                                    pierceCap = 4;
-                                    removeAfterPierce = true;
-                                    pierceArmor = true;
-                                    absorbable = false;
-
-
-                                    width = 7;
-                                    height = 16;
-                                    shrinkX = 1;
-                                    shrinkY = 1;
-                                    frontColor = Color.white;
-                                    backColor = Color.valueOf("cbdbfc");
-                                    splashDamage = 3;
-                                    splashDamageRadius = 8;
-                                    makeFire = true;
-                                    collidesAir = false;
-                                    despawnHit = false;
-                                    hitEffect = despawnEffect = Fx.none;
-
-                                    knockback = 0.35f;
-                                    impact = true;
-                                }};
-                        }};
-
-                        fragBullet = new BasicBulletType(){{
-                            lightRadius = 0;
-                            speed = 4.5f;
-                            drag = 0.04f;
-                            damage = 2;
-                            lifetime = 20;
-                            pierce = true;
-                            pierceCap = 2;
-                            pierceArmor = true;
-                            absorbable = false;
-
-
-                            width = 9;
-                            height = 13;
-                            shrinkX = 1;
-                            shrinkY = 1;
-                            status = StatusEffects.burning;
-                            statusDuration = 120;
-                            frontColor = Color.white;
-                            backColor = Color.valueOf("cbdbfc");
-                            splashDamage = 5;
-                            splashDamageRadius = 8;
-                            makeFire = true;
-                            collidesAir = false;
-                            despawnHit = false;
-                            hitEffect = despawnEffect = Fx.none;
-
-                            knockback = 0.35f;
-                            impact = true;
-
-                            fragRandomSpread = 0;
-                            fragBullets = 1;
-                            fragBullet = new BasicBulletType(){{
-                                width = height = 2;
-                                speed = 6;
-                                lifetime = 8;
-
-                                shrinkX = shrinkY = 1;
-                                shrinkInterp = Interp.pow2In;
-
-                                damage = 1;
-                                pierce = true;
-                                sticky = true;
-                                stickyExtraLifetime = 60;
-
-                                frontColor = Color.white;
-                                backColor = Color.valueOf("cbdbfc");
-
-                                hitEffect = despawnEffect = Fx.none;
-                            }};
-                        }};
-                    }}
+                        hitEffect = despawnEffect = Fx.none;
+                    }};
+                }};
+            }};
+            ammoTypes.putAll(
+                    MeldItems.silver,
+                    molBullet,
+                    MeldItems.annealedSilver,
+                    molBullet
             );
 
             consume(new ConsumeLiquid(MeldLiquids.aspect, outletRate));
+        }};
+
+        shadesteelShingles = new Wall("shadesteel-shingles"){{
+            requirements(Category.defense, with(MeldItems.shadesteel, 24));
+            health = 800;
+        }};
+
+        silverHusk = new RegenProjector("silver-husk"){{
+            requirements(Category.defense, with(MeldItems.debris, 15, MeldItems.annealedSilver, 8));
+            health = 600;
+            armor = 3;
+            range = 1;
+            healPercent = 0.05f;
+            effectChance = 0.05f;
+            baseColor = MeldPal.aspect;
+
+            insulated = true;
+
+            liquidCapacity = 20;
+            drawer = new DrawMulti(
+                new DrawRegion("-bottom"){{
+                    layer = Layer.block - 1;
+                }},
+                new DrawLiquidTile(MeldLiquids.aspect),
+                new DrawDefault()
+            );
+
+            consume(new ConsumeLiquid(MeldLiquids.aspect, outletRate/2));
         }};
 
         coreRaft = new CoreRaft("core-raft"){
@@ -500,6 +540,17 @@ public class MeldBlocks {
                 optional = true;
                 booster = true;
             }});
+        }};
+
+        pneumaticPulsear = new SingleBeamDrill("pneumatic-pulsar"){{
+            requirements(Category.production, with(MeldItems.debris, 200, MeldItems.carbolith, 150, MeldItems.aspectPipe, 300));
+            health = 1800;
+            size = 5;
+            itemCapacity = 50;
+
+            range = 8;
+
+            consume(new ConsumeLiquid(MeldLiquids.aether, outletRate/2));
         }};
 
         earthboundInfuser = new ModularCrafter("earthbound-infuser"){{
@@ -569,7 +620,7 @@ public class MeldBlocks {
             ItemRecipe
             shadesteel = new ItemRecipe(with(MeldItems.tenbris, 2), with(MeldItems.shadesteel, 2)),
             glass = new ItemRecipe(with(MeldItems.clayMallows, 2), with(MeldItems.glassMallows, 2)),
-            silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 1)),
+            silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 2)),
             platings1 = new ItemRecipe(with(MeldItems.shadesteel, 4, MeldItems.carbolith, 2), with(MeldItems.cruciblePlating, 4)),
             platings2 = new ItemRecipe(with(MeldItems.glassMallows, 4, MeldItems.debris, 2), with(MeldItems.cruciblePlating, 4));
 
@@ -652,7 +703,7 @@ public class MeldBlocks {
         }};
 
         rotaryKiln = new ModularCrafter("rotary-kiln"){{
-            requirements(Category.crafting, with(MeldItems.debris, 350));
+            requirements(Category.crafting, with(MeldItems.debris, 250, MeldItems.cruciblePlating, 150));
             size = 5;
 
             hasItems = true;
@@ -669,7 +720,7 @@ public class MeldBlocks {
 
             ItemRecipe shadesteel = new ItemRecipe(with(MeldItems.tenbris, 12), with(MeldItems.shadesteel, 12));
             ItemRecipe glass = new ItemRecipe(with(MeldItems.clayMallows, 12), with(MeldItems.glassMallows, 12));
-            ItemRecipe silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 1));
+            ItemRecipe silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 2));
             ItemRecipe platings1 = new ItemRecipe(with(MeldItems.shadesteel, 4, MeldItems.carbolith, 2), with(MeldItems.cruciblePlating, 4));
             ItemRecipe platings2 = new ItemRecipe(with(MeldItems.glassMallows, 4, MeldItems.debris, 2), with(MeldItems.cruciblePlating, 4));
 
@@ -754,6 +805,60 @@ public class MeldBlocks {
             );
         }};
 
+        pneumaticExtruder = new ModularCrafter("pneumatic-extruder"){{
+            requirements(Category.crafting, with(MeldItems.debris, 60, MeldItems.cruciblePlating, 40));
+            size = 3;
+
+            hasItems = true;
+            hasLiquids = true;
+            liquidCapacity = outletRate * 60;
+
+            itemCapacity = 10;
+
+            acceptedLiquids.addAll(MeldLiquids.aspect);
+            acceptedItems.addAll(MeldItems.shadesteel, MeldItems.elnarDust, MeldItems.debris, MeldItems.annealedSilver);
+            dumpedItems.addAll(MeldItems.aspectPipe);
+
+            ItemRecipe
+                    aspectPipe1 = new ItemRecipe(with(MeldItems.tenbris, 2, MeldItems.elnarDust, 2), with(MeldItems.aspectPipe, 4)),
+                    aspectPipe2 = new ItemRecipe(with(MeldItems.debris, 1, MeldItems.annealedSilver, 2), with(MeldItems.aspectPipe, 4));
+
+            float produceTime = 30;
+
+            modules.addAll(
+                    new GateModule(
+                            ModOUT.ZERO, new GateModule.RecipeCondition(aspectPipe1)
+                    ),
+                    new GateModule(
+                            ModOUT.ONE, new GateModule.RecipeCondition(aspectPipe2)
+                    ),
+                    new LambdaModule(){{
+                        //Set every ping after the first one found as 1 to zero
+                        updater = b -> {
+                            int a = 0;
+                            for(int i = 0; i < 2; i++){
+                                b.setPin(i, Math.max(b.getPin(i) - a, 0));
+                                a = (int)Math.max(a, b.getPin(i));
+                            }
+                            b.setPin(ModOUT.TWO, a);
+                        };
+                    }},
+                    new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.aspect, outletRate * 2), ModIN.TWO, ModOUT.THREE),
+                    new RecipeCraftingModule(){{
+                        recipe = aspectPipe1;
+                        efficiencyPins = new int[]{ModIN.THREE, ModIN.ZERO};
+                        progressPin = ModOUT.FOUR;
+                        craftTime = produceTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = aspectPipe2;
+                        efficiencyPins = new int[]{ModIN.THREE, ModIN.ONE};
+                        progressPin = ModOUT.FIVE;
+                        craftTime = produceTime;
+                    }}
+            );
+        }};
+
         sharkFactory = new UnitFactory("shark-factory"){{
             requirements(Category.units, with(MeldItems.debris, 500, MeldItems.carbolith, 350, MeldItems.silver, 450));
             size = 5;
@@ -813,6 +918,26 @@ public class MeldBlocks {
             ));
             size = 5;
             health = 300;
+        }};
+
+        bruisekit = new Bruiskit("bruisekit"){{
+            requirements(Category.effect, with(
+                    MeldItems.debris, 60,
+                    MeldItems.aspectPipe, 45,
+                    MeldItems.resonarum, 80
+            ));
+            size = 2;
+        }};
+
+        gauze = new Gauze("gauze"){{
+            requirements(Category.effect, with(
+                    MeldItems.debris, 60,
+                    MeldItems.aspectPipe, 45,
+                    MeldItems.resonarum, 80
+            ));
+            size = 3;
+
+            health = 640;
         }};
 
         chute = new Duct("chute"){{

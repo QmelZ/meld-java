@@ -5,6 +5,7 @@ import mindustry.graphics.Pal;
 
 public class MeldPal {
     public static Color
+    aspect = Color.valueOf("f0f5fe"),
     shark = Color.valueOf("a393feff"),
     darkShark = Color.valueOf("665c9f"),
     accentClear = Pal.accent.cpy().a(0),
