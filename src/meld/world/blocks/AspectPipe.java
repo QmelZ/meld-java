@@ -73,7 +73,7 @@ public class AspectPipe extends Conduit {
                 }
 
                 //At the same time try dumping aspect
-                if(liquid == MeldLiquids.aether && this.canDumpLiquid(other, MeldLiquids.aspect)) {
+                if(!(other instanceof ConduitBuild || other instanceof LiquidRouter.LiquidRouterBuild) && liquid == MeldLiquids.aether && this.canDumpLiquid(other, MeldLiquids.aspect)) {
                     Liquid original = liquid;
                     liquid = MeldLiquids.aspect;
                     float ofract = other.liquids.get(liquid) / other.block.liquidCapacity;
