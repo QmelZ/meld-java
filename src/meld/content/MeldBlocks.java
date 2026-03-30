@@ -2,16 +2,18 @@ package meld.content;
 
 import arc.graphics.Color;
 import arc.math.Interp;
+import arc.util.Log;
 import meld.*;
 import meld.entities.bullet.OutflowBulletType;
 import meld.entities.bullet.TransitionBulletType;
 import meld.graphics.*;
 import meld.world.blocks.*;
 import meld.world.blocks.crafting.ModularCrafter;
-import meld.world.blocks.crafting.modules.ConsumeGate;
-import meld.world.blocks.crafting.modules.ConsumeLiquidModule;
-import meld.world.blocks.crafting.modules.MultiplierModule;
-import meld.world.blocks.crafting.modules.ProduceLiquidModule;
+import meld.world.blocks.crafting.ItemRecipe;
+import meld.world.blocks.crafting.Recipe;
+import meld.world.blocks.crafting.modules.*;
+import meld.world.blocks.crafting.modules.GateModule.ConsumeCondition;
+import meld.world.blocks.crafting.modules.GateModule.OutputCondition;
 import meld.world.meta.*;
 import mindustry.Vars;
 import mindustry.content.Fx;
@@ -37,6 +39,7 @@ import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidJunction;
 import mindustry.world.blocks.liquid.LiquidRouter;
 import mindustry.world.blocks.production.*;
+import mindustry.world.blocks.storage.Unloader;
 import mindustry.world.blocks.units.UnitFactory;
 import mindustry.world.consumers.ConsumeLiquid;
 import mindustry.world.draw.*;
@@ -47,11 +50,13 @@ import static mindustry.type.ItemStack.with;
 public class MeldBlocks {
 
     //Strata blocks first
-    public static Block chute, chuteRouter, chuteBridge, chuteJunction, chuteOverflow;
+    public static Block chute, chuteRouter, chuteBridge, chuteJunction, unloadingHub;
 
     public static Block sonarSpire, movementAnchor, nullifier;
 
     public static Block coreRaft, aetherAccumulator, elementalBlaster, earthboundInfuser, sharkFactory;
+
+    public static ModularCrafter gasKiln, rotaryKiln;
 
     public static Block channelNode, channelFace, aspectOutlet, aspectPipe;
 
@@ -102,6 +107,8 @@ public class MeldBlocks {
 
             health = 200;
 
+            solid = false;
+
             placeableLiquid = true;
 
             liquidOutputDirections = new int[]{0};
@@ -124,7 +131,7 @@ public class MeldBlocks {
 
         aspectPipe = new AspectPipe("aspect-pipe"){{
             requirements(Category.liquid, with(
-                    MeldItems.silver, 3
+                    MeldItems.annealedSilver, 5, MeldItems.glassMallows, 2
             ));
             leaks = false;
             health = 120;
@@ -528,18 +535,11 @@ public class MeldBlocks {
             modules.addAll(
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.fumes, 2f), 0),
                     new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.fumes, 1, MeldLiquids.aspect, outletRate * 2), 1, 2),
-                    new ConsumeGate(with(MeldItems.debris, 1), 3),
-                    new MultiplierModule(){{
-                        inputPins = new int[]{2,3};
-                        outputPin = 4;
-                    }},
-                    new ItemCraftingModule(){{
-                        efficiencyPin = 4;
+                    new RecipeCraftingModule(){{
+                        efficiencyPin = 2;
                         progressPin = 5;
                         craftTime = 12;
-
-                        inputItems = with(MeldItems.debris, 1);
-                        outputItem = new ItemStack(MeldItems.carbolith, 1);
+                        recipe = new ItemRecipe(with(MeldItems.debris, 1), with(MeldItems.carbolith, 1));
                     }}
             );
 
@@ -549,6 +549,209 @@ public class MeldBlocks {
             displayEfficiencyScale = 9;
             craftTime = 60/5f;
              */
+        }};
+
+        gasKiln = new ModularCrafter("gas-kiln"){{
+            requirements(Category.crafting, with(MeldItems.debris, 80));
+            size = 2;
+
+            hasItems = true;
+            hasLiquids = true;
+            liquidCapacity = outletRate * 60;
+
+            itemCapacity = 10;
+
+            acceptedLiquids.addAll(MeldLiquids.aspect);
+            acceptedItems.addAll(MeldItems.tenbris, MeldItems.clayMallows, MeldItems.carbolith, MeldItems.debris, MeldItems.shadesteel, MeldItems.glassMallows, MeldItems.silver);
+            dumpedItems.addAll(MeldItems.cruciblePlating, MeldItems.shadesteel, MeldItems.glassMallows, MeldItems.annealedSilver);
+
+
+            ItemRecipe
+            shadesteel = new ItemRecipe(with(MeldItems.tenbris, 2), with(MeldItems.shadesteel, 2)),
+            glass = new ItemRecipe(with(MeldItems.clayMallows, 2), with(MeldItems.glassMallows, 2)),
+            silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 1)),
+            platings1 = new ItemRecipe(with(MeldItems.shadesteel, 4, MeldItems.carbolith, 2), with(MeldItems.cruciblePlating, 4)),
+            platings2 = new ItemRecipe(with(MeldItems.glassMallows, 4, MeldItems.debris, 2), with(MeldItems.cruciblePlating, 4));
+
+            float produceTime = 60;
+
+            modules.addAll(
+                    new GateModule(
+                            ModOUT.ZERO, new GateModule.RecipeCondition(shadesteel)
+                    ),
+                    new GateModule(
+                            ModOUT.ONE, new GateModule.RecipeCondition(glass)
+                    ),
+                    new GateModule(
+                            ModOUT.TWO, new GateModule.RecipeCondition(silver)
+                    ),
+                    new GateModule(
+                            ModOUT.THREE, new GateModule.RecipeCondition(platings1)
+                    ),
+                    new GateModule(
+                            ModOUT.FOUR, new GateModule.RecipeCondition(platings2)
+                    ),
+                    new LambdaModule(){{
+                        //Set every ping after the first one found as 1 to zero
+                        updater = b -> {
+                            int a = 0;
+                            for(int i = 0; i < 5; i++){
+                                b.setPin(i, Math.max(b.getPin(i) - a, 0));
+                                a = (int)Math.max(a, b.getPin(i));
+                            }
+                            b.setPin(ModOUT.FIVE, a);
+
+                            /*
+                            int firstValid = -1;
+                            for(int i = 0; i < 5; i++){
+                                if(firstValid != -1){
+                                    b.setPin(i, 0);
+                                    continue;
+                                }
+
+                                float pinValue = b.getPin(i);
+                                if(pinValue > 0){
+                                    firstValid = i;
+                                }
+                            }
+                             */
+                        };
+                    }},
+                    new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.aspect, outletRate * 2), ModIN.FIVE, ModOUT.SIX),
+                    new RecipeCraftingModule(){{
+                        recipe = shadesteel;
+                        efficiencyPins = new int[]{ModIN.SIX, ModIN.ZERO};
+                        progressPin = ModOUT.SEVEN;
+                        craftTime = produceTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = glass;
+                        efficiencyPins = new int[]{ModIN.SIX, ModIN.ONE};
+                        progressPin = ModOUT.EIGHT;
+                        craftTime = produceTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = silver;
+                        efficiencyPins = new int[]{ModIN.SIX, ModIN.TWO};
+                        progressPin = ModOUT.NINE;
+                        craftTime = produceTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = platings1;
+                        efficiencyPins = new int[]{ModIN.SIX, ModIN.THREE};
+                        progressPin = ModOUT.TEN;
+                        craftTime = produceTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = platings2;
+                        efficiencyPins = new int[]{ModIN.SIX, ModIN.FOUR};
+                        progressPin = ModOUT.ELEVEN;
+                        craftTime = produceTime;
+                    }}
+            );
+        }};
+
+        rotaryKiln = new ModularCrafter("rotary-kiln"){{
+            requirements(Category.crafting, with(MeldItems.debris, 350));
+            size = 5;
+
+            hasItems = true;
+            hasLiquids = true;
+            liquidCapacity = outletRate * 60 * 2;
+
+            itemCapacity = 48;
+
+            acceptedLiquids.addAll(MeldLiquids.aspect);
+            acceptedItems.addAll(MeldItems.tenbris, MeldItems.clayMallows, MeldItems.carbolith, MeldItems.debris, MeldItems.shadesteel, MeldItems.glassMallows, MeldItems.silver);
+            dumpedItems.addAll(MeldItems.cruciblePlating, MeldItems.shadesteel, MeldItems.glassMallows, MeldItems.annealedSilver);
+
+            defaultData.put(0, 1);
+
+            ItemRecipe shadesteel = new ItemRecipe(with(MeldItems.tenbris, 12), with(MeldItems.shadesteel, 12));
+            ItemRecipe glass = new ItemRecipe(with(MeldItems.clayMallows, 12), with(MeldItems.glassMallows, 12));
+            ItemRecipe silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 1));
+            ItemRecipe platings1 = new ItemRecipe(with(MeldItems.shadesteel, 4, MeldItems.carbolith, 2), with(MeldItems.cruciblePlating, 4));
+            ItemRecipe platings2 = new ItemRecipe(with(MeldItems.glassMallows, 4, MeldItems.debris, 2), with(MeldItems.cruciblePlating, 4));
+
+            //The max crafting speed when boosted
+            float craftingTime = 120;
+
+            modules.addAll(
+                    //Set the base rate based on aspect intake
+                    new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.aspect, outletRate * 8), 0, 1),
+                    //Setup the flags for possible recipies
+                    new GateModule(
+                            ModOUT.TWO,
+                            new ConsumeCondition(shadesteel.inputItems),
+                            new OutputCondition(shadesteel.outputItems)
+                    ),
+                    new GateModule(
+                            ModOUT.THREE,
+                            new ConsumeCondition(glass.inputItems),
+                            new OutputCondition(glass.outputItems)
+                    ),
+                    new GateModule(
+                            ModOUT.FOUR,
+                            new ConsumeCondition(platings1.inputItems),
+                            new OutputCondition(platings1.outputItems)
+                    ),
+                    new GateModule(
+                            ModOUT.FIVE,
+                            new ConsumeCondition(platings2.inputItems),
+                            new OutputCondition(platings2.outputItems)
+                    ),
+                    new GateModule(
+                            ModOUT.SIX,
+                            new ConsumeCondition(silver.inputItems),
+                            new OutputCondition(silver.outputItems)
+                    ),
+                    //Take the average efficiency
+                    new LambdaModule(){{
+                        int[] gatePins = new int[]{2, 3, 4, 5, 6};
+                        float drums = 3;
+                        int outPin = 7;
+
+                        updater = build -> {
+                            float total = 0;
+                            for(int i: gatePins){
+                                total += build.data.get(i);
+                            }
+                            float out = drums/Math.max(total, 1);
+                            build.setPin(outPin, out);
+                        };
+                    }},
+                    //Recipies
+                    new RecipeCraftingModule(){{
+                        recipe = shadesteel;
+                        efficiencyPins = new int[]{1, 2, 7};
+                        progressPin = 8;
+                        craftTime = craftingTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = glass;
+                        efficiencyPins = new int[]{1, 3, 7};
+                        progressPin = 9;
+                        craftTime = craftingTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = platings1;
+                        efficiencyPins = new int[]{1, 4, 7};
+                        progressPin = 10;
+                        craftTime = craftingTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = platings2;
+                        efficiencyPins = new int[]{1, 5, 7};
+                        progressPin = 11;
+                        craftTime = craftingTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = silver;
+                        efficiencyPins = new int[]{1, 6, 7};
+                        progressPin = 12;
+                        craftTime = craftingTime/8f;
+                    }}
+            );
         }};
 
         sharkFactory = new UnitFactory("shark-factory"){{
@@ -634,10 +837,12 @@ public class MeldBlocks {
             ((Duct) chute).bridgeReplacement = this;
         }};
 
-        chuteOverflow = new OverflowDuct("chute-overflow"){{
-            requirements(Category.distribution, with(MeldItems.debris, 6));
-            health = 90;
-            speed = 4f;
+        unloadingHub = new Unloader("unloading-hub"){{
+            requirements(Category.distribution, with(MeldItems.debris, 450));
+            size = 3;
+            health = 900;
+            speed = 1f;
+
             solid = false;
         }};
 

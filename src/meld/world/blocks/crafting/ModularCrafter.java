@@ -11,6 +11,7 @@ import mindustry.type.Item;
 import mindustry.type.ItemStack;
 import mindustry.type.Liquid;
 import mindustry.world.Block;
+import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.meta.Attribute;
 
 import java.util.HashMap;
@@ -21,12 +22,21 @@ public class ModularCrafter extends Block {
     public Seq<CrafterModule> modules = new Seq<CrafterModule>();
     public ObjectMap<Object, Seq<CrafterModule>> listeners = new ObjectMap<Object, Seq<CrafterModule>>();
 
+    //list of items/liquids which this block accepts
     public Seq<Liquid> acceptedLiquids = new Seq<>();
     public Seq<Item> acceptedItems = new Seq<>();
 
+    //List of items/liquids which get dumped
     public Seq<Liquid> dumpedLiquids = new Seq<>();
     public Seq<Item> dumpedItems = new Seq<>();
 
+    //Default float data array
+    public IntFloatMap defaultData = new IntFloatMap();
+
+    public ModularCrafter(String name) {
+        super(name);
+        update = true;
+    }
 
     @Override
     public void setBars() {
@@ -34,6 +44,7 @@ public class ModularCrafter extends Block {
 
         if(acceptedLiquids.size + dumpedLiquids.size > 0){
             removeBar("liquid");
+
             for(Liquid liquid: acceptedLiquids){
                 addLiquidBar(liquid);
             }
@@ -42,14 +53,6 @@ public class ModularCrafter extends Block {
             }
         }
     }
-
-    public ModularCrafter(String name) {
-        super(name);
-        update = true;
-    }
-
-    //Default float data array
-    public IntFloatMap defaultData = new IntFloatMap();
 
     public static void trigger(ModularCrafter block, ModularCrafterBuild build, Object event){
         Seq<CrafterModule> events = block.listeners.get(event);
@@ -88,12 +91,26 @@ public class ModularCrafter extends Block {
     }
 
     public static abstract class CraftingModule extends CrafterModule{
-        public int efficiencyPin;
+        public int efficiencyPin = -1;
+        public int[] efficiencyPins;
         public int progressPin;
-        public float craftTime;
+        public float craftTime = 60;
+
+        public boolean canCraft(ModularCrafterBuild build){
+            return true;
+        };
 
         public void update(ModularCrafterBuild build){
-            float efficiency = build.getPin(efficiencyPin);
+            if(!canCraft(build)) return;
+
+            float efficiency = 1;
+            if(efficiencyPin != -1) efficiency = build.getPin(efficiencyPin);
+            if(efficiencyPins != null){
+                for(int i: efficiencyPins){
+                    efficiency *= build.getPin(i);
+                }
+            }
+
             float progress = build.getPin(progressPin);
             progress += efficiency * Time.delta;
 
@@ -140,7 +157,19 @@ public class ModularCrafter extends Block {
         @Override
         public void update(ModularCrafterBuild build) {
             super.update(build);
+        }
 
+        @Override
+        public boolean canCraft(ModularCrafterBuild build) {
+            if(outputItems != null){
+                for(var output : outputItems){
+                    if(build.items.get(output.item) + output.amount >= build.block.itemCapacity){
+                        return false;
+                    }
+                }
+            }
+            if(outputItem != null && build.items.get(outputItem.item) + outputItem.amount >= build.block.itemCapacity) return false;
+            return true;
         }
 
         @Override
@@ -156,6 +185,44 @@ public class ModularCrafter extends Block {
             }
         }
     }
+
+    //Just some static finals to help readability
+    public static class ModOUT{
+        public static final float ON = 1, OFF = 0;
+        public static final int
+            ZERO = 0,
+            ONE = 1,
+            TWO = 2,
+            THREE = 3,
+            FOUR = 4,
+            FIVE = 5,
+            SIX = 6,
+            SEVEN = 7,
+            EIGHT = 8,
+            NINE = 9,
+            TEN = 10,
+            ELEVEN = 11,
+            TWELVE = 12;
+    };
+    public static class ModIN{
+        public static final float ON = 1, OFF = 0;
+        public static final int
+            ZERO = 0,
+            ONE = 1,
+            TWO = 2,
+            THREE = 3,
+            FOUR = 4,
+            FIVE = 5,
+            SIX = 6,
+            SEVEN = 7,
+            EIGHT = 8,
+            NINE = 9,
+            TEN = 10,
+            ELEVEN = 11,
+            TWELVE = 12;
+    };
+
+    public static final float ON = 1, OFF = 0;
 
     public class ModularCrafterBuild extends Building {
 
