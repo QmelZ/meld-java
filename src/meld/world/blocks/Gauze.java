@@ -25,11 +25,11 @@ public class Gauze extends Block {
     public float reload = 120;
     public float detectHeadstart = 0.75f;
 
-    public float syncMargin = 5f;
+    public float syncMargin = 20;
 
     public int propagateMaxRange = 10;
 
-    public float healAmount = 200;
+    public float pulseStrength = 200;
     public float maxFract = 0.1f;
 
     Seq<Building> searching = new Seq<>(), qued = new Seq<>(), explored = new Seq<>();
@@ -73,7 +73,6 @@ public class Gauze extends Block {
             craftTimer += efficiency;
             if(craftTimer >= craftTime){
                 craft();
-                craftTimer %= craftTime;
             }
         }
 
@@ -94,7 +93,11 @@ public class Gauze extends Block {
 
         public void craft(){
                 SpoolRecipe recipe = recipies.find(r -> r.valid(gauze, this));
-                recipe.apply(gauze, this);
+                if(recipe != null){
+                    //I've somehow had recipe be null so im not taking any chances here
+                    recipe.apply(gauze, this);
+                    craftTimer %= craftTime;
+                }
         }
 
         //Only propagates through 1x1 blocks and their adjacent blocks
@@ -107,7 +110,7 @@ public class Gauze extends Block {
             searching.addAll(this.proximity);
 
             boolean healed = false;
-            float charge = healAmount;
+            float charge = pulseStrength;
 
             for(int i = 0; i < propagateMaxRange; i++){
                 for(Building build: searching){
@@ -120,7 +123,7 @@ public class Gauze extends Block {
                          * -Remaining charge
                          * -0
                          */
-                        float healAmount = Mathf.maxZero(Math.min(Math.min(build.maxHealth * maxFract, build.block.health - build.health), charge));
+                        float healAmount = Mathf.maxZero(Math.min(Math.min(Math.min(build.maxHealth, pulseStrength) * maxFract, build.block.health - build.health), charge));
                         if(healAmount > 0){
                             Fx.healBlockFull.at(build.x, build.y, 0, Pal.heal, build.block);
                             build.heal(healAmount);
@@ -144,7 +147,7 @@ public class Gauze extends Block {
             }
 
             if(healed) time = reload * detectHeadstart;
-            energy = energy - Mathf.clamp(healAmount - charge, 0, healAmount);
+            energy = energy - Mathf.clamp(pulseStrength - charge, 0, pulseStrength);
 
             float totalTime = 0;
             float averageEnergy = 0;

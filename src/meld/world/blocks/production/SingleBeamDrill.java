@@ -26,11 +26,13 @@ public class SingleBeamDrill extends Block {
 
     public int range = 5, tier = 4;
 
+    public float minHealthf = 0.25f;
     //I know that sounds like a lot of items at once but well... yeah it's a lot of items at once
     public int baseProductivity = 30;
     public float selfDamage = 400;
     public float targetDamage = 2400;
     public ObjectFloatMap<Item> itemMultipliers = new ObjectFloatMap<>();
+    public ObjectMap<Item, Item> transformItems = new ObjectMap<>();
     public float drillTime = 300;
 
     public SingleBeamDrill(String name) {
@@ -52,9 +54,14 @@ public class SingleBeamDrill extends Block {
         public float time;
 
         @Override
+        public boolean shouldConsume() {
+            return super.shouldConsume() && healthf() >= minHealthf;
+        }
+
+        @Override
         public void updateTile() {
             super.updateTile();
-            time += efficiency;
+            if(healthf() >= minHealthf) time += efficiency;
             if(time >= drillTime){
                 drill();
                 time %= drillTime;
@@ -96,6 +103,8 @@ public class SingleBeamDrill extends Block {
             }
 
             if(found == null) return;
+
+            found = transformItems.get(found, found);
 
             int mined = (int)(baseProductivity * itemMultipliers.get(found, 1));
 

@@ -41,7 +41,7 @@ public class MeldEnvironment {
             metalWeave, metalWeaveHole, metalWeaveGlow,
     //Badlands
             sandMeld, softSand, sandstone,
-            redsandMeld, redSand, redSandWeave, crackstone,
+            redsandMeld, redSand, aspectSoil, redSandWeave, crackstone,
     //Barrens
             bedrock, bedrockMeld,
             slate, slateMeld,
@@ -281,6 +281,7 @@ public class MeldEnvironment {
         sandstone = new Floor("hard-sand", 3);
         redSandWeave = new Floor("red-sand-weave", 3);
         redSand = new Floor("red-sand", 3);
+        aspectSoil = new Floor("aspect-soil", 3);
         crackstone = new Floor("cracked-sand", 4);
 
         meldWall = new StaticWall("meld-wall"){{

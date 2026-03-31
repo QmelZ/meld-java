@@ -30,19 +30,22 @@ public class ModularCrafter extends Block {
     public Seq<Liquid> dumpedLiquids = new Seq<>();
     public Seq<Item> dumpedItems = new Seq<>();
 
+    public boolean replaceBars = true;
+
     //Default float data array
     public IntFloatMap defaultData = new IntFloatMap();
 
     public ModularCrafter(String name) {
         super(name);
         update = true;
+        solid = true;
     }
 
     @Override
     public void setBars() {
         super.setBars();
 
-        if(acceptedLiquids.size + dumpedLiquids.size > 0){
+        if(replaceBars && acceptedLiquids.size + dumpedLiquids.size > 0){
             removeBar("liquid");
 
             for(Liquid liquid: acceptedLiquids){

@@ -543,6 +543,7 @@ public class MeldBlocks {
             health = 500;
             armor = 2;
             hasLiquids = true;
+            replaceBars = false;
 
             squareSprite = false;
 
@@ -605,7 +606,14 @@ public class MeldBlocks {
             requirements(Category.production, with(MeldItems.debris, 200, MeldItems.carbolith, 150, MeldItems.aspectPipe, 300));
             health = 1800;
             size = 5;
-            itemCapacity = 50;
+            itemCapacity = 100;
+            baseProductivity = 50;
+            drillTime = 360;
+
+            transformItems.putAll(
+                    MeldItems.clayMallows, MeldItems.glassMallows,
+                    MeldItems.tenbris, MeldItems.shadesteel
+            );
 
             range = 8;
 
@@ -644,7 +652,7 @@ public class MeldBlocks {
 
             modules.addAll(
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.fumes, 2f), 0),
-                    new GateModule(2, new GateModule.RecipeCondition(carbolith)),
+                    new GateModule(1, new GateModule.RecipeCondition(carbolith)),
                     new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.fumes, 1, MeldLiquids.aspect, outletRate * 2), 1, 2),
                     new RecipeCraftingModule(){{
                         efficiencyPin = 2;
@@ -781,7 +789,7 @@ public class MeldBlocks {
             ItemRecipe shadesteel = new ItemRecipe(with(MeldItems.tenbris, 12), with(MeldItems.shadesteel, 12));
             ItemRecipe glass = new ItemRecipe(with(MeldItems.clayMallows, 12), with(MeldItems.glassMallows, 12));
             ItemRecipe silver = new ItemRecipe(with(MeldItems.silver, 1), with(MeldItems.annealedSilver, 2));
-            ItemRecipe platings1 = new ItemRecipe(with(MeldItems.shadesteel, 4, MeldItems.carbolith, 2), with(MeldItems.cruciblePlating, 4));
+            ItemRecipe platings1 = new ItemRecipe(with(MeldItems.shadesteel, 4, MeldItems.debris, 2), with(MeldItems.cruciblePlating, 4));
             ItemRecipe platings2 = new ItemRecipe(with(MeldItems.glassMallows, 4, MeldItems.debris, 2), with(MeldItems.cruciblePlating, 4));
 
             //The max crafting speed when boosted
@@ -987,6 +995,10 @@ public class MeldBlocks {
                     MeldItems.resonarum, 80
             ));
             size = 2;
+
+            consume(
+                    new ConsumeLiquid(MeldLiquids.fumes, 0.5f)
+            );
         }};
 
         gauze = new Gauze("gauze"){{
@@ -1004,7 +1016,7 @@ public class MeldBlocks {
                     new SpoolRecipe(new ItemStack(MeldItems.resonarum, 2), 200)
             );
 
-            consumeLiquid(MeldLiquids.fumes, 0.5f);
+            consumeLiquid(MeldLiquids.fumes, 1f);
             consumeItem(MeldItems.resonarum, 2);
         }};
 
