@@ -6,11 +6,12 @@ import meld.*;
 import meld.entities.bullet.OutflowBulletType;
 import meld.entities.bullet.TransitionBulletType;
 import meld.graphics.*;
+import meld.world.blocks.consumers.ConsumeAspects;
 import meld.world.blocks.*;
+import meld.world.blocks.crafting.MeldGenericCrafter;
 import meld.world.blocks.crafting.ModularCrafter;
-import meld.world.blocks.crafting.ItemRecipe;
-import meld.world.blocks.crafting.Recipe;
-import meld.world.blocks.crafting.SpoolRecipe;
+import meld.world.blocks.crafting.recipe.ItemRecipe;
+import meld.world.blocks.crafting.recipe.SpoolRecipe;
 import meld.world.blocks.crafting.modules.*;
 import meld.world.blocks.crafting.modules.GateModule.ConsumeCondition;
 import meld.world.blocks.crafting.modules.GateModule.OutputCondition;
@@ -128,7 +129,7 @@ public class MeldBlocks {
             placeableLiquid = true;
         }};
 
-        aspectOutlet = new GenericCrafter("aspect-outlet"){{
+        aspectOutlet = new MeldGenericCrafter("aspect-outlet"){{
             requirements(Category.liquid, with(
                     MeldItems.debris, 7
             ));
@@ -145,13 +146,17 @@ public class MeldBlocks {
 
             drawer = new DrawMulti(
                     new DrawRegion("-bottom"),
-                    new DrawLiquidTile(),
+                    new DrawLiquidTile(){{
+                        drawLiquid = MeldLiquids.aspect;
+                    }},
                     new DrawRegion(),
                     new DrawSideRegion()
             );
 
-            consume(new ConsumeLiquid(
-                    MeldLiquids.aether, outletRate/10f
+            //consumeLiquid(MeldLiquids.aether, outletRate/10);
+
+            consume(new ConsumeAspects(
+                    outletRate/10f, MeldLiquids.aetherEfficiencies
             ));
 
             outputLiquid = new LiquidStack(MeldLiquids.aspect, outletRate);
@@ -547,7 +552,7 @@ public class MeldBlocks {
 
             squareSprite = false;
 
-            dumpedLiquids.addAll(MeldLiquids.aether, MeldLiquids.fumes);
+            dumpedLiquids.addAll(MeldLiquids.pollutantMixture, MeldLiquids.fumes);
 
             //Should make all the modules trigger in order
             hookAll(BlockEvent.Defaults.proximityUpdate,
@@ -570,7 +575,7 @@ public class MeldBlocks {
             );
 
             modules.addAll(
-                    new ProduceLiquidModule(new LiquidStack(MeldLiquids.aether, 1), 0),
+                    new ProduceLiquidModule(new LiquidStack(MeldLiquids.pollutantMixture, 1), 0),
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.fumes, 1), 1)
             );
         }};

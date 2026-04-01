@@ -1,10 +1,10 @@
 package meld.world.blocks.crafting;
 
-import arc.struct.IntFloatMap;
-import arc.struct.ObjectMap;
-import arc.struct.Seq;
+import arc.struct.*;
 import arc.util.Log;
 import arc.util.Time;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.type.Item;
@@ -283,6 +283,28 @@ public class ModularCrafter extends Block {
         public void update() {
             super.update();
             modules.each(c -> c.update(this));
+        }
+
+        @Override
+        public void write(Writes write) {
+            super.write(write);
+            write.i(data.size);
+            int[] keys = data.keys().toArray().toArray();
+
+            for(int i: keys){
+                write.i(i);
+                write.f(data.get(i));
+            }
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+            data = new IntFloatMap();
+            int len = read.i();
+            for (int i = 0; i < len; i++){
+                data.put(read.i(), read.f());
+            }
         }
     }
 }

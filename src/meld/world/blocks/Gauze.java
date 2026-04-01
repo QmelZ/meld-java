@@ -5,15 +5,15 @@ import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.struct.Seq;
 import arc.util.Time;
-import meld.world.blocks.crafting.Recipe;
-import meld.world.blocks.crafting.SpoolRecipe;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
+import meld.world.blocks.crafting.recipe.SpoolRecipe;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.gen.Building;
 import mindustry.graphics.Pal;
 import mindustry.ui.Bar;
 import mindustry.world.Block;
-import mindustry.world.Tile;
 
 public class Gauze extends Block {
 
@@ -30,7 +30,7 @@ public class Gauze extends Block {
     public int propagateMaxRange = 10;
 
     public float pulseStrength = 200;
-    public float maxFract = 0.1f;
+    public float maxFract = 0.25f;
 
     Seq<Building> searching = new Seq<>(), qued = new Seq<>(), explored = new Seq<>();
     Seq<GauzeBuild> connectedGauzes = new Seq<>();
@@ -64,11 +64,13 @@ public class Gauze extends Block {
         @Override
         public void updateTile() {
             super.updateTile();
-            if(time >= reload){
-                time %= reload;
-                propagate();
+            if(energy >= pulseStrength){
+                if(time >= reload) {
+                    time %= reload;
+                    propagate();
+                }
+                time += Time.delta;
             }
-            time += Time.delta;
 
             craftTimer += efficiency;
             if(craftTimer >= craftTime){
@@ -150,17 +152,7 @@ public class Gauze extends Block {
             energy = energy - Mathf.clamp(pulseStrength - charge, 0, pulseStrength);
 
             float totalTime = 0;
-            float averageEnergy = 0;
             connectedGauzes.addAll(this);
-
-            for(GauzeBuild gauze: connectedGauzes){
-                averageEnergy += gauze.energy;
-            }
-            averageEnergy /= connectedGauzes.size;
-
-            for(GauzeBuild gauze: connectedGauzes){
-                gauze.energy = averageEnergy;
-            }
 
             //Remove gauzes close to firing, then sync
 
@@ -176,6 +168,22 @@ public class Gauze extends Block {
             }
 
             connectedGauzes.clear();
+        }
+
+        @Override
+        public void write(Writes write) {
+            super.write(write);
+            write.f(time);
+            write.f(craftTimer);
+            write.f(energy);
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+            time = read.f();
+            craftTimer = read.f();
+            energy = read.f();
         }
 
         @Override

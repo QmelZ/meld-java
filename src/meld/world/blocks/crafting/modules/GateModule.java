@@ -3,7 +3,7 @@ package meld.world.blocks.crafting.modules;
 import arc.struct.Seq;
 import meld.world.blocks.LiquidUtil;
 import meld.world.blocks.crafting.ModularCrafter;
-import meld.world.blocks.crafting.ItemRecipe;
+import meld.world.blocks.crafting.recipe.ItemRecipe;
 import mindustry.type.ItemStack;
 import mindustry.type.LiquidStack;
 

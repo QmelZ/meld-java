@@ -1,7 +1,7 @@
 package meld.world.blocks.crafting.modules;
 
 import meld.world.blocks.crafting.ModularCrafter;
-import meld.world.blocks.crafting.Recipe;
+import meld.world.blocks.crafting.recipe.Recipe;
 
 public class RecipeCraftingModule extends ModularCrafter.CraftingModule {
     public Recipe recipe;

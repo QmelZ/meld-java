@@ -1,10 +1,7 @@
-package meld.world.blocks.crafting;
+package meld.world.blocks.crafting.recipe;
 
 import meld.world.blocks.Gauze;
-import mindustry.gen.Building;
 import mindustry.type.ItemStack;
-import mindustry.type.LiquidStack;
-import mindustry.world.Block;
 
 public class SpoolRecipe extends Recipe<Gauze, Gauze.GauzeBuild> {
 

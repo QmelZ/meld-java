@@ -1,4 +1,4 @@
-package meld.world.blocks.crafting;
+package meld.world.blocks.crafting.recipe;
 
 import meld.world.blocks.LiquidUtil;
 import mindustry.gen.Building;

@@ -10,6 +10,8 @@ import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectMap;
 import arc.util.Log;
 import arc.util.Time;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.entities.Damage;
@@ -115,6 +117,18 @@ public class SingleBeamDrill extends Block {
         @Override
         public float progress() {
             return time/drillTime;
+        }
+
+        @Override
+        public void write(Writes write) {
+            super.write(write);
+            write.f(time);
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+            time = read.f();
         }
     }
 }
