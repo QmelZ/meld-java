@@ -8,7 +8,7 @@ public class LiquidUtil {
 
     public static boolean hasAll(LiquidStack[] liquids, Building build){
         for(LiquidStack stack: liquids){
-            if(!(build.liquids.get(stack.liquid) < stack.amount)) return false;
+            if(build.liquids.get(stack.liquid) <= 0) return false;
         }
         return true;
     }
