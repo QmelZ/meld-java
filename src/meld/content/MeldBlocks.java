@@ -8,7 +8,6 @@ import meld.entities.bullet.TransitionBulletType;
 import meld.graphics.*;
 import meld.world.blocks.consumers.ConsumeAspects;
 import meld.world.blocks.*;
-import meld.world.blocks.crafting.MeldGenericCrafter;
 import meld.world.blocks.crafting.ModularCrafter;
 import meld.world.blocks.crafting.RecipeCrafter;
 import meld.world.blocks.crafting.recipe.ItemRecipe;
@@ -17,6 +16,10 @@ import meld.world.blocks.crafting.modules.*;
 import meld.world.blocks.crafting.modules.GateModule.ConsumeCondition;
 import meld.world.blocks.crafting.modules.GateModule.OutputCondition;
 import meld.world.blocks.crafting.recipe.TimedRecipe;
+import meld.world.blocks.fluid.ChannelValve;
+import meld.world.blocks.fluid.ChannelVent;
+import meld.world.blocks.fluid.VisualAspectPipe;
+import meld.world.blocks.items.PriorityInputSplitter;
 import meld.world.blocks.production.SingleBeamDrill;
 import meld.world.meta.*;
 import mindustry.Vars;
@@ -70,7 +73,7 @@ public class MeldBlocks {
 
     public static ModularCrafter gasKiln, rotaryKiln, pneumaticExtruder;
 
-    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelVent;
+    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelVent, manualValve;
 
     public static Block sunder, molotov, vivisection;
 
@@ -108,23 +111,6 @@ public class MeldBlocks {
                     MeldItems.debris, 5
             ));
             health = 120;
-
-            liquidCapacity = 100;
-            solid = false;
-            placeableLiquid = true;
-        }};
-
-        channelVent = new ChannelVent("pressure-vent"){{
-            requirements(Category.liquid, with(
-                    MeldItems.debris, 8,
-                    MeldItems.carbolith,
-                    8
-            ));
-            health = 180;
-            armor = 1;
-
-            minPressure = 0.25f;
-            ventRate = 2;
 
             liquidCapacity = 100;
             solid = false;
@@ -199,6 +185,34 @@ public class MeldBlocks {
             size = 1;
             botColor = Color.white;
             junctionReplacement = channelFace;
+        }};
+
+        channelVent = new ChannelVent("pressure-vent"){{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 8,
+                    MeldItems.carbolith,
+                    8
+            ));
+            health = 180;
+            armor = 1;
+
+            minPressure = -0.25f;
+            ventRate = 0.5f;
+
+            liquidCapacity = 100;
+            solid = false;
+            placeableLiquid = true;
+        }};
+
+        manualValve= new ChannelValve("manual-valve"){{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 8
+            ));
+
+            health = 120;
+
+            solid = false;
+            placeableLiquid = true;
         }};
 
         sunder = new ItemTurret("sunder"){{
@@ -966,7 +980,7 @@ public class MeldBlocks {
 
             range = 220;
 
-            liquidCapacity = 8 * outletRate * 60;
+            liquidCapacity = 1 * outletRate * 60;
             hasLiquids = true;
 
             consume(new ConsumeAspects(outletRate * 2, MeldLiquids.aspectEfficiencies, MeldLiquids.aspectDensities));
@@ -1048,7 +1062,7 @@ public class MeldBlocks {
             ((Duct) chute).bridgeReplacement = this;
         }};
 
-        chuteOverflow = new OverflowDuct("chute-overflow"){{
+        chuteOverflow = new PriorityInputSplitter("chute-overflow"){{
             requirements(Category.distribution, with(MeldItems.debris, 4));
             health = 90;
             speed = 4f;

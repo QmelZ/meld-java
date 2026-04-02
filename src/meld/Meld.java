@@ -89,6 +89,12 @@ public class Meld extends Mod{
         MeldBlocks.load();
         MeldEnvironment.load();
 
+        Vars.content.blocks().each(b -> {
+            if(b.minfo.mod != null && b.minfo.mod.name.equals("meld")){
+                b.deconstructDropAllLiquid = true;
+            }
+        });
+
 
         delayTime = 5;
         Events.run(Trigger.update, () -> {

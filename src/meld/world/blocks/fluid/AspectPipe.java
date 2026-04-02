@@ -1,26 +1,17 @@
-package meld.world.blocks;
+package meld.world.blocks.fluid;
 
-import arc.graphics.g2d.Draw;
-import arc.graphics.g2d.TextureRegion;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
-import arc.util.Tmp;
-import meld.content.MeldLiquids;
 import meld.world.blocks.crafting.RecipeCrafter;
 import mindustry.Vars;
 import mindustry.gen.Building;
-import mindustry.graphics.Drawf;
-import mindustry.graphics.Layer;
 import mindustry.type.Liquid;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidRouter;
 
-import static meld.content.MeldLiquids.aetherEfficiencies;
-import static meld.content.MeldLiquids.outletMapping;
-import static mindustry.Vars.renderer;
-import static mindustry.Vars.tilesize;
+import static meld.content.MeldLiquids.*;
 
 public class AspectPipe extends Conduit {
     static final float rotatePad = 6, hpad = rotatePad / 2f / 4f;
@@ -37,10 +28,13 @@ public class AspectPipe extends Conduit {
 
     public class AspectPipeBuild extends ConduitBuild{
 
+        public float lastMoved = 0;
+
         public void updateTile() {
+            lastMoved = 0;
             this.smoothLiquid = Mathf.lerpDelta(this.smoothLiquid, this.liquids.currentAmount() / liquidCapacity, 0.05F);
             if (this.liquids.currentAmount() > 1.0E-4F && this.timer(timerFlow, 1.0F)) {
-                this.moveLiquidForward(leaks, this.liquids.current());
+                lastMoved = moveLiquidForward(leaks, this.liquids.current());
                 this.noSleep();
 
                 //Attempt to push liquids to the sides
@@ -101,7 +95,7 @@ public class AspectPipe extends Conduit {
                         float flow = Math.min(other.block.liquidCapacity - other.liquids.get(liquid), amount) * 10;
                         if (other.acceptLiquid(this, liquid)) {
                             other.handleLiquid(this, liquid, flow);
-                            this.liquids.remove(original, flow/aetherEfficiencies.get(outletProduct, 1));
+                            this.liquids.remove(original, flow/aetherDensities.get(liquid, 1)/10);
                             total += amount;
                         }
 
