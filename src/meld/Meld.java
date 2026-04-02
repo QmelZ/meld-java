@@ -83,6 +83,7 @@ public class Meld extends Mod{
     @Override
     public void loadContent(){
         MeldStatusEffects.load();
+        MeldBullets.load();
         MeldUnits.load();
         MeldItems.load();
         MeldLiquids.load();

@@ -61,7 +61,7 @@ public class MeldBlocks {
     public static Block chute, chuteRouter, chuteBridge, chuteJunction, chuteOverflow, unloadingHub;
 
     public static Block sonarSpire, movementAnchor, nullifier,
-            //Bruiskit: Targets largest, highest hp blocks, functional blocks first, continuously heals
+            //Bruisekit: Targets largest, highest hp blocks, functional blocks first, continuously heals
 
             //Gauze chainheals smallest, lowest hp blocks, low target prio blocks first.
 
@@ -73,7 +73,7 @@ public class MeldBlocks {
 
     public static ModularCrafter gasKiln, rotaryKiln, pneumaticExtruder;
 
-    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelVent, manualValve;
+    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelVent, manualValve, intakeValve;
 
     public static Block sunder, molotov, vivisection;
 
@@ -177,7 +177,9 @@ public class MeldBlocks {
                     MeldItems.annealedSilver, 5, MeldItems.glassMallows, 2
             ));
             leaks = false;
-            health = 120;
+            health = 200;
+            armor = 2;
+            insulated = true;
 
             placeableLiquid = true;
 
@@ -204,12 +206,26 @@ public class MeldBlocks {
             placeableLiquid = true;
         }};
 
-        manualValve= new ChannelValve("manual-valve"){{
+        manualValve = new ChannelValve("manual-valve"){{
             requirements(Category.liquid, with(
                     MeldItems.debris, 8
             ));
 
             health = 120;
+
+            solid = false;
+            placeableLiquid = true;
+        }};
+
+        intakeValve = new ChannelValve("intake-valve"){{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 80,
+                    MeldItems.shadesteel, 48
+            ));
+            size = 3;
+
+            health = 800;
+            armor = 8;
 
             solid = false;
             placeableLiquid = true;
@@ -540,7 +556,7 @@ public class MeldBlocks {
                 new DrawDefault()
             );
 
-            consume(new ConsumeLiquid(MeldLiquids.aspect, outletRate/2));
+            consume(new ConsumeAspects(outletRate/2, MeldLiquids.aspectEfficiencies, MeldLiquids.aspectDensities));
         }};
 
         coreRaft = new CoreRaft("core-raft"){
@@ -646,19 +662,23 @@ public class MeldBlocks {
         }};
 
         pneumaticPulsear = new SingleBeamDrill("pneumatic-pulsar"){{
-            requirements(Category.production, with(MeldItems.debris, 200, MeldItems.carbolith, 150, MeldItems.aspectPipe, 300));
-            health = 1800;
+            requirements(Category.production, with(MeldItems.debris, 500, MeldItems.carbolith, 250, MeldItems.shadesteel, 350, MeldItems.aspectPipe, 300));
+            health = 2400;
+            armor = 40;
+
             size = 5;
             itemCapacity = 100;
             baseProductivity = 50;
             drillTime = 360;
+            range = 8;
 
             transformItems.putAll(
                     MeldItems.clayMallows, MeldItems.glassMallows,
                     MeldItems.tenbris, MeldItems.shadesteel
             );
 
-            range = 8;
+            liquidCapacity = 50;
+
 
             consume(new ConsumeAspects(outletRate/2, MeldLiquids.outletEfficiencies, MeldLiquids.outletDensities));
         }};
@@ -1009,7 +1029,7 @@ public class MeldBlocks {
             health = 300;
         }};
 
-        bruisekit = new Bruiskit("bruisekit"){{
+        bruisekit = new Bruisekit("bruisekit"){{
             requirements(Category.effect, with(
                     MeldItems.debris, 60,
                     MeldItems.aspectPipe, 45,

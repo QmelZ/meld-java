@@ -4,13 +4,10 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.math.Mathf;
 import arc.struct.Seq;
-import mindustry.Vars;
 import mindustry.entities.Units;
 import mindustry.gen.Building;
-import mindustry.gen.Teamc;
-import mindustry.world.blocks.units.RepairTower;
 
-public class Bruiskit extends FieldPulsar{
+public class Bruisekit extends FieldPulsar{
 
     Seq<Building> tmpDamaged = new Seq<>();
 
@@ -21,11 +18,12 @@ public class Bruiskit extends FieldPulsar{
 
     public float recentDamageMultiplier = 0.1f;
 
-    public Bruiskit(String name) {
+    public Bruisekit(String name) {
         super(name);
+        fogRadius = 0;
     }
 
-    public class BruiskitBuild extends PulsarBuild{
+    public class BruisekitBuild extends PulsarBuild{
         public Building target;
 
 

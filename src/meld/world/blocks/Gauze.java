@@ -121,7 +121,7 @@ public class Gauze extends Block {
                         /**
                          * Max of a few numbers
                          * -Missing health
-                         * -maxFract * build.maxHealth
+                         * -maxFract * Math.max(build.maxHealth pulseStrength)
                          * -Remaining charge
                          * -0
                          */
