@@ -11,7 +11,6 @@ import meld.world.blocks.consumers.ConsumeAspects;
 import meld.world.blocks.*;
 import meld.world.blocks.crafting.ModularCrafter;
 import meld.world.blocks.crafting.RecipeCrafter;
-import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.recipe.ItemRecipe;
 import meld.world.blocks.crafting.recipe.SpoolRecipe;
 import meld.world.blocks.crafting.modules.*;
@@ -669,8 +668,8 @@ public class MeldBlocks {
             size = 3;
 
             modules.addAll(
-                new StupidCraftingModule(0){{
-                    requestPins = new int[]{1, 2, 3, 4, 5, 6};
+                new StupidConsumeAllModule(0){{
+                    inputPins = new int[]{1, 2, 3, 4, 5, 6};
                 }},
 
                 new StupidConsumeItemModule(1, -1){{
@@ -685,14 +684,14 @@ public class MeldBlocks {
                     time = 180f;
                 }},
 
-                new StupidProduceItemModule(4, 0, -4){{
+                new StupidProduceItemModule(0, -4){{
                     items = ItemStack.with(Items.titanium, 2);
                     time = 60f;
                 }},
-                new StupidProduceLiquidModule(5, 0){{
+                new StupidProduceLiquidModule(0){{
                     liquids = LiquidStack.with(Liquids.cryofluid, 1f);
                 }},
-                new StupidProducePayloadModule(6, 0, -6){{
+                new StupidProducePayloadModule(0, -6){{
                     payloads = PayloadStack.with(Blocks.plastaniumWall, 2);
                     time = 60f;
                 }}
@@ -713,32 +712,30 @@ public class MeldBlocks {
                 size = 2;
 
                 modules.addAll(
-                    new StupidCraftingModule(0){{
-                        requestPins = new int[]{1, 2, 3};
-                    }},
-                    new StupidProduceItemModule(1, 0, -1){{
+                    new StupidProduceItemModule( 0, -1){{
                         items = ItemStack.with(Items.silicon, 1);
                         time = 60f;
                     }},
+                        new StupidConsumeAllModule(0){{
+                            inputPins = new int[]{2, 3};
+                        }},
+                            new StupidConsumeItemModule(2, -2){{
+                                items = ItemStack.with(Items.sand, 1);
+                                time = 20f;
+                            }},
+                            new StupidConsumeHighestModule(3){{
+                                inputPins = new int[]{4, 5};
+                            }},
+                                new StupidConsumeItemModule(4, -4){{
+                                    items = ItemStack.with(Items.coal, 1);
+                                    time = 40f;
+                                }},
+                                new StupidConsumeItemModule(5, -5){{
+                                    items = ItemStack.with(Items.pyratite, 1);
+                                    time = 60f;
 
-                    new StupidConsumeItemModule(2, -2){{
-                        items = ItemStack.with(Items.sand, 1);
-                        time = 20f;
-                    }},
-
-                    new StupidConsumeHighestModule(3){{
-                        requestPins = new int[]{4, 5};
-                    }},
-                    new StupidConsumeItemModule(4, -4){{
-                        items = ItemStack.with(Items.coal, 1);
-                        time = 40f;
-                    }},
-                    new StupidConsumeItemModule(5, -5){{
-                        items = ItemStack.with(Items.pyratite, 1);
-                        time = 60f;
-
-                        efficiencyIncrease = 2.5f;
-                    }}
+                                    efficiencyIncrease = 2.5f;
+                                }}
                 );
             }
         };

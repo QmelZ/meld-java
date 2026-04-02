@@ -7,22 +7,23 @@ import mindustry.type.*;
 
 public class StupidConsumeLiquidModule extends CrafterModule{
     public LiquidStack[] liquids;
+    /// Pin to provide efficiency on.
+    public int outputPin;
+
     public float baseEfficiency = 0;
     public float efficiencyIncrease = 1;
-    /// Pin to provide efficiency on.
-    public int providePin;
 
-    public StupidConsumeLiquidModule(int providePin){
-        this.providePin = providePin;
+    public StupidConsumeLiquidModule(int outputPin){
+        this.outputPin = outputPin;
     }
 
     @Override
     public void update(ModularCrafterBuild build){
-        float provide = build.getPin(providePin);
+        float output = build.getPin(outputPin);
         //Get the amount of efficiency that was eaten
-        float consumed = (efficiencyIncrease - provide - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
+        float consumed = (efficiencyIncrease - output - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
 
-        if(provide < baseEfficiency) build.setPin(providePin, baseEfficiency);
+        if(output < baseEfficiency) build.setPin(outputPin, baseEfficiency);
 
         //if efficiency has been used
         if(consumed > 0f){
@@ -35,7 +36,7 @@ public class StupidConsumeLiquidModule extends CrafterModule{
                 for(LiquidStack stack : liquids){
                     build.liquids.remove(stack.liquid, stack.amount * min);
                 }
-                build.setPin(providePin, baseEfficiency + efficiencyIncrease * min);
+                build.setPin(outputPin, baseEfficiency + efficiencyIncrease * min);
             }
         }
     }

@@ -12,29 +12,25 @@ import mindustry.world.blocks.payloads.*;
 
 import java.util.*;
 
-//TODO remake this to be the same as the consumption modules
 public class StupidProducePayloadModule extends CrafterModule{
     public PayloadStack[] payloads;
-    /// Pin used to read production efficiency.
-    public int efficiencyPin;
+    /// Pin to consume efficiency from.
+    public int inputPin;
     /// Pin used to store crafting progress.
     public int progressPin;
-    /// Pin used to store whether this module can output. Assigned every tick.
-    public int workingPin;
     public float time = 60f;
 
-    public StupidProducePayloadModule(int workingPin, int efficiencyPin, int progressPin){
-        this.efficiencyPin = efficiencyPin;
-        this.workingPin = workingPin;
+    public StupidProducePayloadModule(int inputPin, int progressPin){
+        this.inputPin = inputPin;
         this.progressPin = progressPin;
     }
 
     @Override
     public void update(ModularCrafterBuild build){
         if(outputFits(build)){
-            //consumption
             float progress = build.getPin(progressPin);
-            progress += build.getPin(efficiencyPin) * Time.delta;
+            progress += build.getPin(inputPin) * build.timeScale() * Time.delta;
+            build.setPin(inputPin, 0f);
 
             while(progress > time && outputFits(build)){
                 for(PayloadStack stack : payloads){
@@ -43,10 +39,6 @@ public class StupidProducePayloadModule extends CrafterModule{
                 progress -= time;
             }
             build.setPin(progressPin, progress);
-            //whether other modules should work
-            build.setPin(workingPin, 1f);
-        }else{
-            build.setPin(workingPin, 0f);
         }
 
         //output

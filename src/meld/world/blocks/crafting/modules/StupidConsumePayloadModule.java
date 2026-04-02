@@ -16,27 +16,28 @@ import java.util.*;
 
 public class StupidConsumePayloadModule extends CrafterModule{
     public PayloadStack[] payloads;
+    /// Pin to provide efficiency on.
+    public int outputPin;
     /// Pin to store consumption progress.
     public int progressPin;
-    /// Pin to provide efficiency on.
-    public int providePin;
     public float time = 60f;
 
     public float baseEfficiency = 0f;
     public float efficiencyIncrease = 1f;
 
-    public StupidConsumePayloadModule(int providePin, int progressPin){
-        this.providePin = providePin;
+    public StupidConsumePayloadModule(int outputPin, int progressPin){
+        this.outputPin = outputPin;
         this.progressPin = progressPin;
     }
 
     @Override
     public void update(ModularCrafterBuild build){
-        float provide = build.getPin(providePin);
-        float consumed = (efficiencyIncrease - provide - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
+        float output = build.getPin(outputPin);
+        //Get the amount of efficiency that was eaten
+        float consumed = (efficiencyIncrease - output - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
         float progress = build.getPin(progressPin);
 
-        if(provide < baseEfficiency) build.setPin(providePin, baseEfficiency);
+        if(output < baseEfficiency) build.setPin(outputPin, baseEfficiency);
 
         if(build.payload != null && contains(payloads, build.payload) && build.moveInPayload()){
             build.payloads.add(build.payload.content());
@@ -45,7 +46,7 @@ public class StupidConsumePayloadModule extends CrafterModule{
 
         //if efficiency has been used
         if(consumed > 0f && has(build, payloads)){
-            build.setPin(providePin, baseEfficiency + efficiencyIncrease);
+            build.setPin(outputPin, baseEfficiency + efficiencyIncrease);
             progress += consumed * Time.delta;
 
             //consumption

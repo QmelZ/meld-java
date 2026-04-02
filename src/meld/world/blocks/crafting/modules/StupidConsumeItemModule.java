@@ -8,7 +8,7 @@ import mindustry.type.*;
 public class StupidConsumeItemModule extends CrafterModule{
     public ItemStack[] items;
     /// Pin to provide efficiency on.
-    public int providePin;
+    public int outputPin;
     /// Pin to store consumption progress.
     public int progressPin;
     public float time = 60f;
@@ -16,22 +16,23 @@ public class StupidConsumeItemModule extends CrafterModule{
     public float baseEfficiency = 0f;
     public float efficiencyIncrease = 1f;
 
-    public StupidConsumeItemModule(int providePin, int progressPin){
-        this.providePin = providePin;
+    public StupidConsumeItemModule(int outputPin, int progressPin){
+        this.outputPin = outputPin;
         this.progressPin = progressPin;
     }
 
     @Override
     public void update(ModularCrafterBuild build){
-        float provide = build.getPin(providePin);
-        float consumed = (efficiencyIncrease - provide - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
+        float output = build.getPin(outputPin);
         float progress = build.getPin(progressPin);
+        //Get the amount of efficiency that was eaten
+        float consumed = (efficiencyIncrease - output - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
 
-        if(provide < baseEfficiency) build.setPin(providePin, baseEfficiency);
+        if(output < baseEfficiency) build.setPin(outputPin, baseEfficiency);
 
         //if efficiency has been used
         if(consumed > 0f && build.items.has(items)){
-            build.setPin(providePin, baseEfficiency + efficiencyIncrease);
+            build.setPin(outputPin, baseEfficiency + efficiencyIncrease);
             progress += consumed * Time.delta;
 
             //consumption

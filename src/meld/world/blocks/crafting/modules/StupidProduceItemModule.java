@@ -4,36 +4,28 @@ import arc.util.*;
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
 import mindustry.type.*;
-
 import java.util.*;
 
-//TODO remake this to be the same as the consumption modules
 public class StupidProduceItemModule extends CrafterModule{
     public ItemStack[] items;
-    /// Pin used to read production efficiency.
-    public int efficiencyPin;
+    /// Pin to consume efficiency from.
+    public int inputPin;
     /// Pin used to store crafting progress.
     public int progressPin;
-    /// Pin used to store whether this module can output. Assigned every tick.
-    public int workingPin;
     public float time = 60f;
 
-    public StupidProduceItemModule(int workingPin, int efficiencyPin, int progressPin){
-        this.efficiencyPin = efficiencyPin;
-        this.workingPin = workingPin;
+    public StupidProduceItemModule(int inputPin, int progressPin){
+        this.inputPin = inputPin;
         this.progressPin = progressPin;
     }
 
     @Override
     public void update(ModularCrafterBuild build){
-        if(!fits(build, items)){
-            build.setPin(workingPin, 0f);
-            return;
-        }
-        build.setPin(workingPin, 1f);
+        if(!fits(build, items)) return;
 
         float progress = build.getPin(progressPin);
-        progress += build.getPin(efficiencyPin) * Time.delta;
+        progress += build.getPin(inputPin) * build.timeScale() * Time.delta;
+        build.setPin(inputPin, 0f);
 
         while(progress > time && fits(build, items)){
             for(ItemStack stack : items){
