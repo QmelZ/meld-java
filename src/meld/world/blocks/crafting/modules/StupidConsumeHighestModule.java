@@ -5,29 +5,31 @@ import meld.world.blocks.crafting.ModularCrafter.*;
 public class StupidConsumeHighestModule extends CrafterModule{
     public int[] inputPins;
     /// Pin to provide efficiency on.
-    public int outputPin;
+    public int[] outputPins;
 
-    public StupidConsumeHighestModule(int outputPin){
-        this.outputPin = outputPin;
+    public StupidConsumeHighestModule(int... outputPins){
+        this.outputPins = outputPins;
     }
 
     public void update(ModularCrafterBuild build){
-        float output = build.getPin(outputPin);
-
-        //Get highest
-        float max = 0f;
-        int maxPin = 0;
+        //Get the highest input pin
+        float input = 0f;
+        int inputPin = 0;
         for(int i : inputPins){
-            if(build.getPin(i) > max){
-                max = build.getPin(i);
-                maxPin = i;
+            if(build.getPin(i) > input){
+                input = build.getPin(i);
+                inputPin = i;
             }
         }
 
-        if(max > output){
+        //Find the least consumed output, it signals inactivity
+        float output = 0f;
+        for(int o : outputPins) output = Math.max(output, build.getPin(o));
+
+        if(input > output){
             //Just swap pin contents
-            build.setPin(maxPin, output);
-            build.setPin(outputPin, max);
+            build.setPin(inputPin, output);
+            for(int o : outputPins) build.setPin(o, input);
         }
 
     }

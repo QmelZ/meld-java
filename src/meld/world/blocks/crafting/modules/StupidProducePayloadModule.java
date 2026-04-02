@@ -77,7 +77,7 @@ public class StupidProducePayloadModule extends CrafterModule{
     }
 
     public boolean outputFits(ModularCrafterBuild build){
-        return Arrays.stream(payloads).allMatch(stack -> build.payloads.get(stack.item) + stack.amount <= build.block.itemCapacity);
+        return Arrays.stream(payloads).allMatch(stack -> build.payloads.get(stack.item) + stack.amount <= build.modular.payloadCapacity);
     }
 
     @Override

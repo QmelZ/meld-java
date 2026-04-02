@@ -49,6 +49,7 @@ public class StupidProduceLiquidModule extends CrafterModule{
     @Override
     public void setup(ModularCrafter block){
         block.hasLiquids = true;
+        block.outputsLiquid = true;
         for(LiquidStack stack : liquids){
             block.dumpedLiquids.add(stack.liquid);
         }

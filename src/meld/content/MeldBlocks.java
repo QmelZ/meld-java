@@ -668,30 +668,27 @@ public class MeldBlocks {
             size = 3;
 
             modules.addAll(
-                new StupidConsumeAllModule(0){{
-                    inputPins = new int[]{1, 2, 3, 4, 5, 6};
-                }},
-
                 new StupidConsumeItemModule(1, -1){{
                     items = ItemStack.with(Items.copper, 2);
                     time = 60f;
                 }},
-                new StupidConsumeLiquidModule(2){{
+                new StupidProduceItemModule(1, -2){{
+                    items = ItemStack.with(Items.titanium, 2);
+                    time = 60f;
+                }},
+                /*
+                new StupidConsumeLiquidModule(2){{ TODO does not work properly
                     liquids = LiquidStack.with(Liquids.water, 1f);
                 }},
+                new StupidProduceLiquidModule(5){{
+                    liquids = LiquidStack.with(Liquids.cryofluid, 1f);
+                }},
+                */
                 new StupidConsumePayloadModule(3, -3){{
                     payloads = PayloadStack.with(Blocks.plastaniumWallLarge, 1);
                     time = 180f;
                 }},
-
-                new StupidProduceItemModule(0, -4){{
-                    items = ItemStack.with(Items.titanium, 2);
-                    time = 60f;
-                }},
-                new StupidProduceLiquidModule(0){{
-                    liquids = LiquidStack.with(Liquids.cryofluid, 1f);
-                }},
-                new StupidProducePayloadModule(0, -6){{
+                new StupidProducePayloadModule(3, -4){{
                     payloads = PayloadStack.with(Blocks.plastaniumWall, 2);
                     time = 60f;
                 }}
@@ -712,11 +709,11 @@ public class MeldBlocks {
                 size = 2;
 
                 modules.addAll(
-                    new StupidProduceItemModule( 0, -1){{
+                    new StupidProduceItemModule( 1, -1){{
                         items = ItemStack.with(Items.silicon, 1);
                         time = 60f;
                     }},
-                        new StupidConsumeAllModule(0){{
+                        new StupidConsumeAllModule(1){{
                             inputPins = new int[]{2, 3};
                         }},
                             new StupidConsumeItemModule(2, -2){{

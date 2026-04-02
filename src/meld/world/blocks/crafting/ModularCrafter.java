@@ -26,8 +26,8 @@ import static mindustry.Vars.tilesize;
 public class ModularCrafter extends PayloadBlock{
 
     //Modules updates every update, listeners are for modules with specific events
-    public Seq<CrafterModule> modules = new Seq<CrafterModule>();
-    public ObjectMap<Object, Seq<CrafterModule>> listeners = new ObjectMap<Object, Seq<CrafterModule>>();
+    public Seq<CrafterModule> modules = new Seq<>();
+    public ObjectMap<Object, Seq<CrafterModule>> listeners = new ObjectMap<>();
 
     //Lists of stuff which this block accepts
     //note: could be a single HashSet<UnlockableContent>.
@@ -106,6 +106,11 @@ public class ModularCrafter extends PayloadBlock{
             update,
             proximityUpdate
         }
+    }
+
+    @Override
+    public boolean outputsItems(){
+        return !dumpedItems.isEmpty();
     }
 
     public static abstract class CrafterModule{
