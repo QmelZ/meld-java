@@ -3,6 +3,7 @@ package meld.world.blocks.crafting.modules.rework;
 import arc.*;
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
+import meld.world.blocks.crafting.modules.rework.base.*;
 import mindustry.game.EventType.*;
 import mindustry.gen.*;
 import mindustry.type.*;

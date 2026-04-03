@@ -3,15 +3,16 @@ package meld.world.blocks.crafting.modules.rework;
 import arc.util.*;
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
+import meld.world.blocks.crafting.modules.rework.base.*;
 import mindustry.type.*;
 
-public class StupidConsumeLiquidModule extends ConsumeModule{
+public class ConsumeLiquidModule extends ConsumeModule{
     public LiquidStack[] liquids;
 
     public float baseEfficiency = 0;
     public float efficiencyIncrease = 1;
 
-    public StupidConsumeLiquidModule(int... outputPins){
+    public ConsumeLiquidModule(int... outputPins){
         super(outputPins);
     }
 

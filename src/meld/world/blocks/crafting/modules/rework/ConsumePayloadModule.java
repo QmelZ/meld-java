@@ -2,6 +2,7 @@ package meld.world.blocks.crafting.modules.rework;
 
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
+import meld.world.blocks.crafting.modules.rework.base.*;
 import mindustry.type.*;
 import mindustry.world.blocks.payloads.*;
 

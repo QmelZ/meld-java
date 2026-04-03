@@ -1,8 +1,8 @@
 package meld.world.blocks.crafting.modules.rework;
 
-import arc.util.*;
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
+import meld.world.blocks.crafting.modules.rework.base.*;
 import mindustry.type.*;
 import java.util.*;
 
@@ -11,6 +11,15 @@ public class ProduceItemModule extends ProduceDiscreteModule{
 
     public ProduceItemModule(int... inputPins){
         super(inputPins);
+    }
+
+    @Override
+    public void update(ModularCrafterBuild build){
+        super.update(build);
+
+        for(ItemStack stack : items){
+            build.dump(stack.item);
+        }
     }
 
     @Override

@@ -13,6 +13,7 @@ import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.type.*;
 import mindustry.world.Block;
+import mindustry.world.blocks.heat.*;
 import mindustry.world.blocks.payloads.*;
 import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.blocks.units.UnitAssemblerModule.*;
@@ -34,6 +35,9 @@ public class ModularCrafter extends PayloadBlock{
     public Seq<Liquid> acceptedLiquids = new Seq<>();
     public Seq<Item> acceptedItems = new Seq<>();
     public Seq<UnlockableContent> acceptedPayloads = new Seq<>();
+
+    public boolean consumesHeat = false;
+    public boolean producesHeat = false;
 
     //Lists of stuff which gets dumped
     public Seq<Liquid> dumpedLiquids = new Seq<>();
@@ -193,10 +197,12 @@ public class ModularCrafter extends PayloadBlock{
 
     public static final float ON = 1, OFF = 0;
 
-    public class ModularCrafterBuild extends PayloadBlockBuild<Payload>{
+    public class ModularCrafterBuild extends PayloadBlockBuild<Payload> implements HeatConsumer, HeatBlock{
         public ModularCrafter modular;
         public IntFloatMap data = new IntFloatMap();
         public PayloadSeq payloads = new PayloadSeq();
+
+        public float heat = 0f;
 
         @Override
         public void draw(){
@@ -232,17 +238,6 @@ public class ModularCrafter extends PayloadBlock{
         public void created() {
             super.created();
             data.putAll(defaultData);
-        }
-
-        @Override
-        public void updateTile() {
-            super.updateTile();
-            this.dumpOutputs();
-        }
-
-        public void dumpOutputs(){
-            dumpedLiquids.each(this::dumpLiquid);
-            dumpedItems.each(this::dump);
         }
 
         public void setPin(int pin, float value){
@@ -291,8 +286,29 @@ public class ModularCrafter extends PayloadBlock{
         }
 
         @Override
+        public float heat(){ //the useful one
+            return heat;
+        }
+
+        @Override
+        public float heatFrac(){ //only used by DrawHeatOutput
+            return 0;
+        }
+
+        @Override
+        public float[] sideHeat(){ //only used by DrawHeatInput
+            return new float[0];
+        }
+
+        @Override
+        public float heatRequirement(){ //only used by DrawHeatInput and DrawHeatRegion
+            return 0;
+        }
+
+        @Override
         public void write(Writes write) {
             super.write(write);
+
             write.i(data.size);
             int[] keys = data.keys().toArray().toArray();
 
@@ -300,16 +316,26 @@ public class ModularCrafter extends PayloadBlock{
                 write.i(i);
                 write.f(data.get(i));
             }
+
+            write.f(heat);
         }
 
         @Override
         public void read(Reads read, byte revision) {
             super.read(read, revision);
+
             data = new IntFloatMap();
             int len = read.i();
             for (int i = 0; i < len; i++){
                 data.put(read.i(), read.f());
             }
+
+            if(revision >= 1) heat = read.f();
+        }
+
+        @Override
+        public byte version(){
+            return 1;
         }
     }
 }

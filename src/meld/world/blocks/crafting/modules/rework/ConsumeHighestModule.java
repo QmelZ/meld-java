@@ -1,6 +1,7 @@
 package meld.world.blocks.crafting.modules.rework;
 
 import meld.world.blocks.crafting.ModularCrafter.*;
+import meld.world.blocks.crafting.modules.rework.base.*;
 
 /// Will only consume from the pin with the highest efficiency.
 public class ConsumeHighestModule extends ConsumeModule{

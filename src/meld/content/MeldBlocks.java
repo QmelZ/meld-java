@@ -613,10 +613,10 @@ public class MeldBlocks {
                     }}
             );*/
 
-            modules.addAll(
+            /*modules.addAll(
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.pollutantMixture, 1), 0),
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.fumes, 1), 1)
-            );
+            );*/
         }};
 
         elementalBlaster = new BeamDrill("elemental-blaster"){{
@@ -669,20 +669,28 @@ public class MeldBlocks {
             size = 3;
 
             modules.addAll(
-                new ProduceItemModule(1, 2){{
-                    items = ItemStack.with(Items.titanium, 2);
-                    time = 30f;
-
-                    progressPin = 0;
+                new ProduceHeatModule(0){{
+                    heatOutput = 10;
                 }},
-                new ConsumeItemModule(1){{
-                    items = ItemStack.with(Items.copper, 2);
-                    time = 30f;
-
-                    progressPin = -1;
+                new AttributeModule(0){{
+                    attribute = Attribute.heat;
+                    baseEfficiency = 0f;
+                    maxBoost = 2f;
+                    storagePin = 1;
                 }},
-                new EfficiencySourceModule(2){{
-                    baseEfficiency = 3f;
+                //This is assigned to the same pin as the attribute, and updates after,
+                //which means it will only "top off" the efficiency that the attributes don't reach.
+                new ConsumeItemModule(0){{
+                    items = ItemStack.with(Items.pyratite, 1);
+                    efficiencyIncrease = 4f;
+                    time = 20f;
+                    progressPin = 2;
+                }},
+                //Same as above, but will also cover for the pyratite consumer.
+                new ConsumeItemModule(0){{
+                    items = ItemStack.with(Items.coal, 1);
+                    time = 40f;
+                    progressPin = 3;
                 }}
             );
         }};
@@ -765,7 +773,7 @@ public class MeldBlocks {
 
             ItemRecipe carbolith = new ItemRecipe(with(MeldItems.debris, 1), with(MeldItems.carbolith, 1));
 
-            modules.addAll(
+            /*modules.addAll(
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.fumes, 2f), 0),
                     new GateModule(1, new GateModule.RecipeCondition(carbolith)),
                     new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.fumes, 1, MeldLiquids.aspect, outletRate * 2), 1, 2),
@@ -775,7 +783,7 @@ public class MeldBlocks {
                         craftTime = 12;
                         recipe = carbolith;
                     }}
-            );
+            );*/
 
 
             /*
@@ -993,7 +1001,7 @@ public class MeldBlocks {
 
             float produceTime = 30;
 
-            modules.addAll(
+            /*modules.addAll(
                     new GateModule(
                             ModOUT.ZERO, new GateModule.RecipeCondition(aspectPipe1)
                     ),
@@ -1024,7 +1032,7 @@ public class MeldBlocks {
                         progressPin = ModOUT.FIVE;
                         craftTime = produceTime;
                     }}
-            );
+            );*/
         }};
 
         sharkFactory = new UnitFactory("shark-factory"){{

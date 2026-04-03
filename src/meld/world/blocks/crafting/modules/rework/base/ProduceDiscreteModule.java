@@ -1,10 +1,7 @@
-package meld.world.blocks.crafting.modules.rework;
+package meld.world.blocks.crafting.modules.rework.base;
 
 import arc.util.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
-import mindustry.type.*;
-
-import java.util.*;
 
 public abstract class ProduceDiscreteModule extends ProduceModule{
 

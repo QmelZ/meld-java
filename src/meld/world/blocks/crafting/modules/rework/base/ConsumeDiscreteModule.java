@@ -1,4 +1,4 @@
-package meld.world.blocks.crafting.modules.rework;
+package meld.world.blocks.crafting.modules.rework.base;
 
 import arc.util.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
@@ -25,8 +25,6 @@ public abstract class ConsumeDiscreteModule extends ConsumeModule{
         //Get the amount of efficiency that was eaten
         float consumed = (efficiencyIncrease - current - baseEfficiency) / (efficiencyIncrease - baseEfficiency);
         float output = Math.max(baseEfficiency, current);
-
-        build.setPin(outputPins[0] + 20, current);
 
         //if efficiency has been used
         if(consumed > 0f && canConsume(build)){

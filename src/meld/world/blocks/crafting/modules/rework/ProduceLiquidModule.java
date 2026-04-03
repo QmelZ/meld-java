@@ -3,23 +3,28 @@ package meld.world.blocks.crafting.modules.rework;
 import arc.util.*;
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
+import meld.world.blocks.crafting.modules.rework.base.*;
 import mindustry.type.*;
 
-public class StupidProduceLiquidModule extends ProduceModule{
+public class ProduceLiquidModule extends ProduceModule{
     public LiquidStack[] liquids;
 
-    public StupidProduceLiquidModule(int... inputPins){
+    public ProduceLiquidModule(int... inputPins){
         super(inputPins);
     }
 
     @Override
     public void update(ModularCrafterBuild build){
-        //check full
+        //dump/check full
+        boolean full = false;
         for(LiquidStack stack : liquids){
+            build.dumpLiquid(stack.liquid);
+
             if(build.liquids.get(stack.liquid) >= build.block.liquidCapacity - 0.001f){
-                return;
+                full = true;
             }
         }
+        if(full) return;
 
         //Sum efficiencies and timescale up
         float input = takeEfficiency(build);

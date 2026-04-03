@@ -1,4 +1,4 @@
-package meld.world.blocks.crafting.modules.rework;
+package meld.world.blocks.crafting.modules.rework.base;
 
 import meld.world.blocks.crafting.ModularCrafter.*;
 
