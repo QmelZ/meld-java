@@ -2,14 +2,27 @@ package meld.world.blocks.fluid;
 
 import arc.Core;
 import arc.audio.Sound;
+import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.TextureRegion;
+import arc.math.Mathf;
+import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Log;
+import arc.util.Tmp;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
+import mindustry.Vars;
 import mindustry.gen.Building;
+import mindustry.gen.Icon;
 import mindustry.gen.Sounds;
+import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
+import mindustry.ui.Styles;
 import mindustry.world.blocks.power.BeamNode;
+
+import static mindustry.Vars.ui;
 
 //When detecting nearby fluids, turn nearby valves off. Can be inverted.
 public class ValveController extends FlexibleSizeJunction{
@@ -17,13 +30,19 @@ public class ValveController extends FlexibleSizeJunction{
     public int updateTimer = timers++;
     public float minPressure = 0.1f;
 
+    public float padding = 5/4f;
+
     public Sound clickSound = Sounds.click;
 
     public TextureRegion[] signRegions = new TextureRegion[2];
+    public TextureRegion bottomRegion = new TextureRegion();
+
+    public Color indicatorColor = Pal.health, fillColor = Pal.heal;
 
     @Override
     public void load() {
         super.load();
+        bottomRegion = Core.atlas.find(name + "-bottom");
         signRegions[0] = Core.atlas.find(name + "-on", "clear");
         signRegions[1] = Core.atlas.find(name + "-off", "clear");
     }
@@ -31,6 +50,7 @@ public class ValveController extends FlexibleSizeJunction{
     public ValveController(String name) {
         super(name);
         configurable = true;
+        saveConfig = true;
         update = true;
         drawDisabled = false;
         autoResetEnabled = false;
@@ -40,13 +60,19 @@ public class ValveController extends FlexibleSizeJunction{
         quickRotate = true;
 
         config(Boolean.class, (ValveControllerBuild entity, Boolean b) -> entity.invert = b);
+        config(Float.class, (ValveControllerBuild entity, Float f) -> entity.threshold = f);
+        config(Float[].class, (ValveControllerBuild entity, Float[] floats) -> {
+            entity.threshold = floats[0];
+            Log.info(floats[1]);
+            entity.invert = floats[1] == -1f;
+        });
     }
-
-    float total;
 
     public class ValveControllerBuild extends FlexibleBuild{
 
         public boolean invert = false;
+        public float threshold = minPressure;
+        public float lastTotal = 0;
 
         @Override
         public void updateTile() {
@@ -56,12 +82,12 @@ public class ValveController extends FlexibleSizeJunction{
 
         public void enablingLogic(){
 
-            total = 0;
+            lastTotal = 0;
             proximity.each(b -> {
-                if(b.liquids != null) total += b.liquids.currentAmount()/b.block.liquidCapacity;
+                if(b.liquids != null) lastTotal += b.liquids.currentAmount()/b.block.liquidCapacity;
             });
 
-            boolean enable = total >= minPressure;
+            boolean enable = lastTotal >= threshold;
 
             if(invert) enable = !enable;
 
@@ -74,33 +100,79 @@ public class ValveController extends FlexibleSizeJunction{
 
         @Override
         public boolean configTapped(){
+            /*
             configure(!invert);
+
+             */
             clickSound.at(this);
-            return false;
+            return true;
         }
 
         @Override
-        public Boolean config(){
-            return enabled;
+        public void buildConfiguration(Table table){
+            table.slider(0, 1, 0.1f, threshold, Vars.net.active(), this::configure).size(240, 40f);
+            table.row();
+            table.button(Icon.pencil, Styles.cleari, () -> {
+                configure(!invert);
+            }).size(40f);
+        }
+
+        @Override
+        public boolean onConfigureBuildTapped(Building other){
+            if(this == other){
+                deselect();
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public Float[] config(){
+            return new Float[]{
+                    threshold, invert ? -1f : 1f
+            };
         }
 
         @Override
         public void draw(){
-            super.draw();
+            Draw.z(Layer.blockUnder);
 
+            Draw.rect(bottomRegion, x, y);
+
+            Draw.z(Layer.block);
+
+
+
+            //Im sure theres a simpler formula but like... come on
+            float fin = threshold;
+            Draw.color(indicatorColor);
+            Fill.rect(x, y - (1 - fin)/2f * (Vars.tilesize) - fin * padding + padding, Vars.tilesize, (Vars.tilesize - padding * 2) * fin);
+
+            fin = Mathf.clamp(lastTotal);
+            Draw.color(fillColor);
+            Fill.rect(x, y - (1 - fin)/2f * (Vars.tilesize) - fin * padding + padding, Vars.tilesize, (Vars.tilesize - padding * 2) * fin);
+
+            Draw.color();
+
+            //Draw.rect(region, x, y);
             Draw.rect(signRegions[invert ? 1 : 0], x, y, rotation * 90);
+
+            Draw.rect(region, x, y);
         }
 
         @Override
         public void write(Writes write) {
             super.write(write);
             write.bool(invert);
+            write.f(threshold);
         }
 
         @Override
         public void read(Reads read, byte revision) {
             super.read(read, revision);
             invert = read.bool();
+            threshold = read.f();
         }
     }
 }

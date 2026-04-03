@@ -190,22 +190,18 @@ public class MeldBlocks {
             junctionReplacement = channelFace;
         }};
 
-        channelDirector = new Conduit("channel-director"){{
+        channelDirector = new ChannelDirector("channel-director"){{
             requirements(Category.liquid, with(
                     MeldItems.debris, 5
             ));
 
-            leaks = false;
             health = 200;
 
-            botColor = Pal.gray;
             placeableLiquid = true;
             liquidPressure = 0.5f;
 
             liquidCapacity = 80;
             size = 1;
-            botColor = Color.white;
-            junctionReplacement = channelFace;
         }};
 
         channelVent = new ChannelVent("pressure-vent"){{

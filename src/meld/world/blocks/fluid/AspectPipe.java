@@ -2,6 +2,7 @@ package meld.world.blocks.fluid;
 
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
+import arc.util.Log;
 import meld.world.blocks.crafting.RecipeCrafter;
 import mindustry.Vars;
 import mindustry.gen.Building;
@@ -58,20 +59,19 @@ public class AspectPipe extends Conduit {
             float total = 0;
             if(!Mathf.zero(liquids.get(liquid))){
 
-                this.incrementDump(this.proximity.size);
+                incrementDump(this.proximity.size);
                 other = other.getLiquidDestination(this, liquid);
-
                 if (other == null || !other.block.hasLiquids || other.liquids == null) return 0;
 
                 //Transfer regular liquid
-                if(this.canDumpLiquid(other, liquid)) {
+                if(canDumpLiquid(other, liquid)) {
                     float ofract = other.liquids.get(liquid) / other.block.liquidCapacity;
                     float fract = this.liquids.get(liquid) / this.block.liquidCapacity;
                     if (ofract < fract) {
                         float amount = (fract - ofract) * this.block.liquidCapacity;
 
-
                         float flow = Math.min(other.block.liquidCapacity - other.liquids.get(liquid), amount);
+
                         if (other.acceptLiquid(this, liquid)) {
                             other.handleLiquid(this, liquid, flow);
                             this.liquids.remove(liquid, flow);
@@ -103,6 +103,15 @@ public class AspectPipe extends Conduit {
                 }
             }
             return total;
+        }
+
+
+        //TODO: Figure out why this even has to be changed to get aspect pipes routing backwards when vanilla conduits don't
+        @Override
+        public boolean acceptLiquid(Building source, Liquid liquid){
+            noSleep();
+            return (liquids.current() == liquid || liquids.currentAmount() < 0.2f)
+                    && (tile == null || source == this || (source.relativeTo(tile.x, tile.y) + 2) % 4 != rotation || source instanceof AspectPipeBuild);
         }
     }
 }
