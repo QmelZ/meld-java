@@ -1,4 +1,4 @@
-package meld.world.blocks.crafting.modules;
+package meld.world.blocks.crafting.modules.rework;
 
 import arc.util.*;
 import meld.world.blocks.crafting.*;
@@ -6,7 +6,7 @@ import meld.world.blocks.crafting.ModularCrafter.*;
 import mindustry.type.*;
 import java.util.*;
 
-public class StupidProduceItemModule extends CrafterModule{
+public class ProduceItemModule extends CrafterModule{
     public ItemStack[] items;
     /// Pin to consume efficiency from.
     public int inputPin;
@@ -14,7 +14,7 @@ public class StupidProduceItemModule extends CrafterModule{
     public int progressPin;
     public float time = 60f;
 
-    public StupidProduceItemModule(int inputPin, int progressPin){
+    public ProduceItemModule(int inputPin, int progressPin){
         this.inputPin = inputPin;
         this.progressPin = progressPin;
     }

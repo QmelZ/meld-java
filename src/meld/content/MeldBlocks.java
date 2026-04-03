@@ -11,6 +11,7 @@ import meld.world.blocks.consumers.ConsumeAspects;
 import meld.world.blocks.*;
 import meld.world.blocks.crafting.ModularCrafter;
 import meld.world.blocks.crafting.RecipeCrafter;
+import meld.world.blocks.crafting.modules.rework.*;
 import meld.world.blocks.crafting.recipe.ItemRecipe;
 import meld.world.blocks.crafting.recipe.SpoolRecipe;
 import meld.world.blocks.crafting.modules.*;
@@ -593,7 +594,7 @@ public class MeldBlocks {
             dumpedLiquids.addAll(MeldLiquids.pollutantMixture, MeldLiquids.fumes);
 
             //Should make all the modules trigger in order
-            hookAll(BlockEvent.Defaults.proximityUpdate,
+            /*hookAll(BlockEvent.Defaults.proximityUpdate,
                     new AttributeModule(){{
                         attribute = MeldAttributes.aetherAttr;
                         baseEfficiency = 0;
@@ -610,7 +611,7 @@ public class MeldBlocks {
 
                         efficiencyPin = 1;
                     }}
-            );
+            );*/
 
             modules.addAll(
                     new ProduceLiquidModule(new LiquidStack(MeldLiquids.pollutantMixture, 1), 0),
@@ -668,11 +669,11 @@ public class MeldBlocks {
             size = 3;
 
             modules.addAll(
-                new StupidConsumeItemModule(1, -1){{
+                new ConsumeItemModule(1, -1){{
                     items = ItemStack.with(Items.copper, 2);
                     time = 60f;
                 }},
-                new StupidProduceItemModule(1, -2){{
+                new ProduceItemModule(1, -2){{
                     items = ItemStack.with(Items.titanium, 2);
                     time = 60f;
                 }},
@@ -684,11 +685,11 @@ public class MeldBlocks {
                     liquids = LiquidStack.with(Liquids.cryofluid, 1f);
                 }},
                 */
-                new StupidConsumePayloadModule(3, -3){{
+                new ConsumePayloadModule(3, -3){{
                     payloads = PayloadStack.with(Blocks.plastaniumWallLarge, 1);
                     time = 180f;
                 }},
-                new StupidProducePayloadModule(3, -4){{
+                new ProducePayloadModule(3, -4){{
                     payloads = PayloadStack.with(Blocks.plastaniumWall, 2);
                     time = 60f;
                 }}
@@ -709,27 +710,34 @@ public class MeldBlocks {
                 size = 2;
 
                 modules.addAll(
-                    new StupidProduceItemModule( 1, -1){{
+                    new ProduceItemModule( 1, -1){{
                         items = ItemStack.with(Items.silicon, 1);
                         time = 60f;
                     }},
-                        new StupidConsumeAllModule(1){{
+                        new ConsumeAllModule(1){{
                             inputPins = new int[]{2, 3};
                         }},
-                            new StupidConsumeItemModule(2, -2){{
+                            new ConsumeItemModule(2, -2){{
                                 items = ItemStack.with(Items.sand, 1);
                                 time = 20f;
                             }},
-                            new StupidConsumeHighestModule(3){{
+                            new ConsumeHighestModule(3){{
                                 inputPins = new int[]{4, 5};
                             }},
-                                new StupidConsumeItemModule(4, -4){{
+                                new ConsumeItemModule(4, -4){{
                                     items = ItemStack.with(Items.coal, 1);
                                     time = 40f;
                                 }},
-                                new StupidConsumeItemModule(5, -5){{
+                                new AttributeModule(5, -5){{
+                                    attribute = Attribute.heat;
+                                    baseEfficiency = 0f;
+                                    maxBoost = 2f;
+                                }},
+                                //This is assigned to the same pin as the attribute, and updates after, which means
+                                //it will only "top off" the efficiency that the attributes don't reach.
+                                new ConsumeItemModule(5, -6){{
                                     items = ItemStack.with(Items.pyratite, 1);
-                                    time = 60f;
+                                    time = 20f;
 
                                     efficiencyIncrease = 2.5f;
                                 }}
@@ -753,7 +761,7 @@ public class MeldBlocks {
             dumpedItems.add(MeldItems.carbolith);
 
 
-            //Should make all the modules trigger in order
+            /*//Should make all the modules trigger in order
             hookAll(BlockEvent.Defaults.proximityUpdate,
                     new AttributeModule(){{
                         attribute = Attribute.steam;
@@ -763,7 +771,7 @@ public class MeldBlocks {
 
                         efficiencyPin = 0;
                     }}
-            );
+            );*/
 
             ItemRecipe carbolith = new ItemRecipe(with(MeldItems.debris, 1), with(MeldItems.carbolith, 1));
 

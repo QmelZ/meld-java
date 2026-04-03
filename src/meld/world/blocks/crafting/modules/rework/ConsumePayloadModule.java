@@ -1,20 +1,14 @@
-package meld.world.blocks.crafting.modules;
+package meld.world.blocks.crafting.modules.rework;
 
-import arc.math.*;
-import arc.math.geom.*;
 import arc.util.*;
 import meld.world.blocks.crafting.*;
 import meld.world.blocks.crafting.ModularCrafter.*;
-import mindustry.ai.types.*;
-import mindustry.content.*;
-import mindustry.entities.*;
-import mindustry.gen.*;
 import mindustry.type.*;
 import mindustry.world.blocks.payloads.*;
 
 import java.util.*;
 
-public class StupidConsumePayloadModule extends CrafterModule{
+public class ConsumePayloadModule extends CrafterModule{
     public PayloadStack[] payloads;
     /// Pin to provide efficiency on.
     public int outputPin;
@@ -25,7 +19,7 @@ public class StupidConsumePayloadModule extends CrafterModule{
     public float baseEfficiency = 0f;
     public float efficiencyIncrease = 1f;
 
-    public StupidConsumePayloadModule(int outputPin, int progressPin){
+    public ConsumePayloadModule(int outputPin, int progressPin){
         this.outputPin = outputPin;
         this.progressPin = progressPin;
     }

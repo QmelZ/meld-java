@@ -1,4 +1,4 @@
-package meld.world.blocks.crafting.modules;
+package meld.world.blocks.crafting.modules.rework;
 
 import arc.*;
 import arc.util.*;
@@ -12,7 +12,7 @@ import mindustry.world.blocks.payloads.*;
 
 import java.util.*;
 
-public class StupidProducePayloadModule extends CrafterModule{
+public class ProducePayloadModule extends CrafterModule{
     public PayloadStack[] payloads;
     /// Pin to consume efficiency from.
     public int inputPin;
@@ -20,7 +20,7 @@ public class StupidProducePayloadModule extends CrafterModule{
     public int progressPin;
     public float time = 60f;
 
-    public StupidProducePayloadModule(int inputPin, int progressPin){
+    public ProducePayloadModule(int inputPin, int progressPin){
         this.inputPin = inputPin;
         this.progressPin = progressPin;
     }

@@ -80,19 +80,10 @@ public class ModularCrafter extends PayloadBlock{
 
     public static void trigger(ModularCrafter block, ModularCrafterBuild build, Object event){
         Seq<CrafterModule> events = block.listeners.get(event);
-        if(events != null) events.each(c -> c.update(build));
+        if(events != null) events.each(c -> c.on_event(build));
     }
 
     public void hook(Object event, CrafterModule module){
-        Seq<CrafterModule> events = listeners.get(event);
-        if(events == null) {
-            listeners.put(event, Seq.with(module));
-            return;
-        }
-        events.add(module);
-    }
-
-    public void hookAll(Object event, CrafterModule... module){
         Seq<CrafterModule> events = listeners.get(event);
         if(events == null) {
             listeners.put(event, Seq.with(module));
@@ -119,6 +110,10 @@ public class ModularCrafter extends PayloadBlock{
         }
 
         public void setup(ModularCrafter block){
+
+        }
+
+        public void on_event(ModularCrafterBuild build){
 
         }
     }

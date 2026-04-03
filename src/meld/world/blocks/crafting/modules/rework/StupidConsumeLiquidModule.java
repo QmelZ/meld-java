@@ -1,4 +1,4 @@
-package meld.world.blocks.crafting.modules;
+package meld.world.blocks.crafting.modules.rework;
 
 import arc.util.*;
 import meld.world.blocks.crafting.*;

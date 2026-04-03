@@ -1,13 +1,13 @@
-package meld.world.blocks.crafting.modules;
+package meld.world.blocks.crafting.modules.rework;
 
 import meld.world.blocks.crafting.ModularCrafter.*;
 
-public class StupidConsumeHighestModule extends CrafterModule{
+public class ConsumeHighestModule extends CrafterModule{
     public int[] inputPins;
     /// Pin to provide efficiency on.
     public int[] outputPins;
 
-    public StupidConsumeHighestModule(int... outputPins){
+    public ConsumeHighestModule(int... outputPins){
         this.outputPins = outputPins;
     }
 
