@@ -696,17 +696,28 @@ public class MeldBlocks {
         }};
 
         new ModularCrafter("stupid-silicon-smelter"){
+            //I refuse to add sprites to the files.
             @Override
             public void load(){
                 super.load();
                 region = Core.atlas.find("silicon-smelter");
                 fullIcon = Core.atlas.find("silicon-smelter");
                 uiIcon = Core.atlas.find("silicon-smelter");
+                if(drawer instanceof DrawMulti m && m.drawers[1] instanceof DrawHeatInput f) f.heat = Core.atlas.find("phase-heater-heat");
+                if(drawer instanceof DrawMulti m && m.drawers[2] instanceof DrawRegion r) r.region = Core.atlas.find("pneumatic-drill-rotator");
+                if(drawer instanceof DrawMulti m && m.drawers[3] instanceof DrawFlame f) f.top = Core.atlas.find("silicon-smelter-top");
             }
 
             {
                 requirements(Category.crafting, with(MeldItems.debris, 40));
                 size = 2;
+
+                drawer = new DrawMulti(
+                    new DrawDefault(),
+                    new DrawHeatInput(),
+                    new DrawRegion("", 3f, true),
+                    new DrawFlame(Color.valueOf("ffef99"))
+                );
 
                 modules.addAll(
                     new ProduceItemModule( 1, 2){{

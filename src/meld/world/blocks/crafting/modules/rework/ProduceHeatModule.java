@@ -19,10 +19,7 @@ public class ProduceHeatModule extends ProduceModule{
         float input = takeEfficiency(build);
 
         build.heat = Mathf.approachDelta(build.heat, heatOutput * input, warmupRate * Time.delta);
-    }
 
-    @Override
-    public void setup(ModularCrafter block){
-        block.rotate = true;
+        build.visualEfficiency = Math.max(input, build.visualEfficiency);
     }
 }

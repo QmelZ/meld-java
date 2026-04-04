@@ -1,10 +1,7 @@
 package meld.world.blocks.crafting;
 
-import arc.math.*;
-import arc.math.geom.*;
 import arc.scene.ui.layout.*;
 import arc.struct.*;
-import arc.struct.IntFloatMap.*;
 import arc.util.*;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
@@ -15,17 +12,10 @@ import mindustry.type.*;
 import mindustry.world.Block;
 import mindustry.world.blocks.heat.*;
 import mindustry.world.blocks.payloads.*;
-import mindustry.world.blocks.production.GenericCrafter;
-import mindustry.world.blocks.units.UnitAssemblerModule.*;
+import mindustry.world.draw.*;
 import mindustry.world.meta.*;
 
-import java.util.*;
-
-import static mindustry.Vars.*;
-import static mindustry.Vars.tilesize;
-
 public class ModularCrafter extends PayloadBlock{
-
     //Modules updates every update, listeners are for modules with specific events
     public Seq<CrafterModule> modules = new Seq<>();
     public ObjectMap<Object, Seq<CrafterModule>> listeners = new ObjectMap<>();
@@ -36,9 +26,6 @@ public class ModularCrafter extends PayloadBlock{
     public Seq<Item> acceptedItems = new Seq<>();
     public Seq<UnlockableContent> acceptedPayloads = new Seq<>();
 
-    public boolean consumesHeat = false;
-    public boolean producesHeat = false;
-
     //Lists of stuff which gets dumped
     public Seq<Liquid> dumpedLiquids = new Seq<>();
     public Seq<Item> dumpedItems = new Seq<>();
@@ -47,10 +34,15 @@ public class ModularCrafter extends PayloadBlock{
     public boolean replaceBars = true;
     public int payloadCapacity = 3;
 
+    /// Used to show heat as a percentage. Does not affect function.
+    public float fullHeat = 10f;
+
     /// Default float data array
     public IntFloatMap defaultData = new IntFloatMap();
     /// When true, shows a table with the data map in the block's display.
     public boolean debugTable = true;
+
+    public DrawBlock drawer = new DrawDefault();
 
 
     public ModularCrafter(String name) {
@@ -80,6 +72,12 @@ public class ModularCrafter extends PayloadBlock{
     public void init(){
         super.init();
         modules.each(m -> m.setup(this));
+    }
+
+    @Override
+    public void load(){
+        super.load();
+        drawer.load(this);
     }
 
     public static void trigger(ModularCrafter block, ModularCrafterBuild build, Object event){
@@ -205,9 +203,13 @@ public class ModularCrafter extends PayloadBlock{
         public float[] sideHeat = new float[4];
         public float heat = 0f;
 
+        public float totalProgress = 0f;
+        public float visualEfficiency = 0f;
+
+
         @Override
         public void draw(){
-            super.draw();
+            drawer.draw(this);
 
             drawPayload();
         }
@@ -283,7 +285,11 @@ public class ModularCrafter extends PayloadBlock{
         @Override
         public void update() {
             super.update();
+            visualEfficiency = 0f;
+
             modules.each(c -> c.update(this));
+
+            totalProgress += visualEfficiency * Time.delta;
         }
 
         //the useful one
@@ -295,7 +301,7 @@ public class ModularCrafter extends PayloadBlock{
         //only used by DrawHeatOutput
         @Override
         public float heatFrac(){
-            return 0;
+            return heat / fullHeat;
         }
 
         //only used by DrawHeatInput
@@ -307,7 +313,17 @@ public class ModularCrafter extends PayloadBlock{
         //only used by DrawHeatInput and DrawHeatRegion
         @Override
         public float heatRequirement(){
-            return 0;
+            return fullHeat;
+        }
+
+        @Override
+        public float warmup(){
+            return visualEfficiency;
+        }
+
+        @Override
+        public float totalProgress(){
+            return totalProgress;
         }
 
         @Override

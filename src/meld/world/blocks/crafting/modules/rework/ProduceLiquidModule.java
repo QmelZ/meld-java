@@ -33,11 +33,13 @@ public class ProduceLiquidModule extends ProduceModule{
         for(LiquidStack stack : liquids){
             build.handleLiquid(build, stack.liquid,
                 Math.min(
-                    stack.amount * input * build.timeScale() * Time.delta,
+                    stack.amount * input * Time.delta,
                     build.block.liquidCapacity - build.liquids.get(stack.liquid)
                 )
             );
         }
+
+        build.visualEfficiency = Math.max(input, build.visualEfficiency);
     }
 
     @Override

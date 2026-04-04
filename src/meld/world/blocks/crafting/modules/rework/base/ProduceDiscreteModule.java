@@ -29,6 +29,7 @@ public abstract class ProduceDiscreteModule extends ProduceModule{
         }
         build.setPin(progressPin, progress);
 
+        build.visualEfficiency = Math.max(input, build.visualEfficiency);
     }
 
     public abstract boolean canOutput(ModularCrafterBuild build);
