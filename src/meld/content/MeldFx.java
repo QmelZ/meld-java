@@ -5,6 +5,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.graphics.g2d.Lines;
+import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
 import arc.math.geom.Position;
@@ -21,6 +22,15 @@ public class MeldFx {
     public static float root2 = Mathf.sqrt(2);
 
     public static Effect
+
+        gasTransfer = new Effect(60, e -> {
+            Draw.z(Layer.blockUnder);
+            Draw.color(e.color);
+            Draw.alpha(e.finpowdown());
+            Angles.randLenVectors(e.id, 2, e.fin() * Vars.tilesize * 1.5f, e.rotation,Vars.tilesize/4f, (x, y) -> {
+                Fill.circle(e.x + x, e.y + y, 2 * e.foutpowdown());
+            });
+        }),
 
         chain = new Effect(240, e -> {
             Draw.color(Color.red);

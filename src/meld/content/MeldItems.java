@@ -4,7 +4,7 @@ import mindustry.type.Item;
 
 public class MeldItems {
     public static Item
-    debris, carbolith, silver, resonarum,
+    debris, carbolith, silver, resonarum, clayMallows,
 
             meldShard;
 
@@ -13,19 +13,23 @@ public class MeldItems {
 
     //Heavy industry content
     public static Item
-    tenbris, shadesteel, elnarDust, annealedSilver, cruciblePlating, aspectPipe;
+    tenbris, shadesteel, elnarDust, annealedSilver, glassMallows, cruciblePlating, aspectPipe;
 
     public static void load(){
 
         debris = new Item("debris"){{
-            cost = 0.1f;
-        }};
-        carbolith = new Item("carbolith"){{
             cost = 0.5f;
         }};
-        silver = new Item("silver"){{
-            cost = 0.4f;
+        carbolith = new Item("carbolith"){{
+            cost = 0.8f;
         }};
+        silver = new Item("silver"){{
+            cost = 0.3f;
+        }};
+        clayMallows = new Item("clay-mallow"){{
+            cost = 0.2f;
+        }};
+
         resonarum = new Item("resonarum");
 
         stonyParticulate = new Item("stony-particulate"){{
@@ -52,6 +56,8 @@ public class MeldItems {
         annealedSilver = new Item("annealed-silver"){{
 
         }};
+
+        glassMallows = new Item("glass-mallow");
 
         aspectPipe = new Item("aspect-pipe"){{
 

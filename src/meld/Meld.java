@@ -1,11 +1,13 @@
 package meld;
 
 import arc.*;
+import arc.graphics.Color;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.struct.IntSeq;
 import arc.struct.Seq;
 import arc.util.Time;
+import arc.util.Tmp;
 import meld.content.*;
 import meld.core.*;
 import mindustry.Vars;
@@ -30,6 +32,28 @@ public class Meld extends Mod{
 
     public static String prefix(String in){
         return name + "-" + in;
+    }
+    private static final StringBuilder b = new StringBuilder();
+
+    public static String gradient(String in, Color... colors){
+        if(colors.length == 1) return "[#" + colors[0].toString().substring(0, 6) + "]" + in + "[]";
+
+        b.setLength(0);
+        b.trimToSize();
+        int length = in.length();
+        int spaces = 0;
+
+        for(int i = 0; i < length; i++){
+            char ind = in.charAt(i);
+            if(Character.isWhitespace(ind)){
+                spaces++;
+                b.append(' ');
+                continue;
+            }
+            b.append("[#").append(Tmp.c1.set(colors[0]).lerp(colors, (float) i / (length - spaces)).toString(), 0, 6).append("]").append(ind).append("[]");
+        }
+
+        return b.toString();
     }
 
     @Override
@@ -61,10 +85,17 @@ public class Meld extends Mod{
     @Override
     public void loadContent(){
         MeldStatusEffects.load();
+        MeldBullets.load();
         MeldUnits.load();
         MeldItems.load();
         MeldLiquids.load();
         MeldBlocks.load();
         MeldEnvironment.load();
+        
+        Vars.content.blocks().each(b -> {
+            if(b.minfo.mod != null && b.minfo.mod.name.equals("meld")){
+                b.deconstructDropAllLiquid = true;
+            }
+        });
     }
 }

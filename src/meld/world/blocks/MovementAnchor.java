@@ -4,6 +4,8 @@ import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Lines;
 import arc.struct.Seq;
 import arc.util.Time;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
 import meld.content.MeldFx;
 import meld.content.MeldStatusEffects;
 import mindustry.entities.Units;
@@ -98,6 +100,18 @@ public class MovementAnchor extends Block {
             super.draw();
             Draw.z(Layer.effect);
             Lines.arc(x, y, range, reloadTime/reload);
+        }
+
+        @Override
+        public void write(Writes write) {
+            super.write(write);
+            write.f(reloadTime);
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+            reloadTime = read.f();
         }
     }
 }

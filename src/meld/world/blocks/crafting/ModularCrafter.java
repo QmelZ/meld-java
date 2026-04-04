@@ -1,16 +1,17 @@
 package meld.world.blocks.crafting;
 
-import arc.struct.IntFloatMap;
-import arc.struct.ObjectMap;
-import arc.struct.Seq;
+import arc.struct.*;
 import arc.util.Log;
 import arc.util.Time;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.type.Item;
 import mindustry.type.ItemStack;
 import mindustry.type.Liquid;
 import mindustry.world.Block;
+import mindustry.world.blocks.production.GenericCrafter;
 import mindustry.world.meta.Attribute;
 
 import java.util.HashMap;
@@ -21,19 +22,32 @@ public class ModularCrafter extends Block {
     public Seq<CrafterModule> modules = new Seq<CrafterModule>();
     public ObjectMap<Object, Seq<CrafterModule>> listeners = new ObjectMap<Object, Seq<CrafterModule>>();
 
+    //list of items/liquids which this block accepts
     public Seq<Liquid> acceptedLiquids = new Seq<>();
     public Seq<Item> acceptedItems = new Seq<>();
 
+    //List of items/liquids which get dumped
     public Seq<Liquid> dumpedLiquids = new Seq<>();
     public Seq<Item> dumpedItems = new Seq<>();
 
+    public boolean replaceBars = true;
+
+    //Default float data array
+    public IntFloatMap defaultData = new IntFloatMap();
+
+    public ModularCrafter(String name) {
+        super(name);
+        update = true;
+        solid = true;
+    }
 
     @Override
     public void setBars() {
         super.setBars();
 
-        if(acceptedLiquids.size + dumpedLiquids.size > 0){
+        if(replaceBars && acceptedLiquids.size + dumpedLiquids.size > 0){
             removeBar("liquid");
+
             for(Liquid liquid: acceptedLiquids){
                 addLiquidBar(liquid);
             }
@@ -42,14 +56,6 @@ public class ModularCrafter extends Block {
             }
         }
     }
-
-    public ModularCrafter(String name) {
-        super(name);
-        update = true;
-    }
-
-    //Default float data array
-    public IntFloatMap defaultData = new IntFloatMap();
 
     public static void trigger(ModularCrafter block, ModularCrafterBuild build, Object event){
         Seq<CrafterModule> events = block.listeners.get(event);
@@ -88,12 +94,26 @@ public class ModularCrafter extends Block {
     }
 
     public static abstract class CraftingModule extends CrafterModule{
-        public int efficiencyPin;
+        public int efficiencyPin = -1;
+        public int[] efficiencyPins;
         public int progressPin;
-        public float craftTime;
+        public float craftTime = 60;
+
+        public boolean canCraft(ModularCrafterBuild build){
+            return true;
+        };
 
         public void update(ModularCrafterBuild build){
-            float efficiency = build.getPin(efficiencyPin);
+            if(!canCraft(build)) return;
+
+            float efficiency = 1;
+            if(efficiencyPin != -1) efficiency = build.getPin(efficiencyPin);
+            if(efficiencyPins != null){
+                for(int i: efficiencyPins){
+                    efficiency *= build.getPin(i);
+                }
+            }
+
             float progress = build.getPin(progressPin);
             progress += efficiency * Time.delta;
 
@@ -107,55 +127,44 @@ public class ModularCrafter extends Block {
         public abstract void craft(ModularCrafterBuild build);
     }
 
-    public static class AttributeModule extends CrafterModule{
-        public int efficiencyPin;
 
-        public Attribute attribute;
-        public float baseEfficiency = 1;
-        public float boostScale = 1;
-        public float maxBoost = 1;
-        public float minEfficiency = -1;
+    //Just some static finals to help readability
+    public static class ModOUT{
+        public static final float ON = 1, OFF = 0;
+        public static final int
+            ZERO = 0,
+            ONE = 1,
+            TWO = 2,
+            THREE = 3,
+            FOUR = 4,
+            FIVE = 5,
+            SIX = 6,
+            SEVEN = 7,
+            EIGHT = 8,
+            NINE = 9,
+            TEN = 10,
+            ELEVEN = 11,
+            TWELVE = 12;
+    };
+    public static class ModIN{
+        public static final float ON = 1, OFF = 0;
+        public static final int
+            ZERO = 0,
+            ONE = 1,
+            TWO = 2,
+            THREE = 3,
+            FOUR = 4,
+            FIVE = 5,
+            SIX = 6,
+            SEVEN = 7,
+            EIGHT = 8,
+            NINE = 9,
+            TEN = 10,
+            ELEVEN = 11,
+            TWELVE = 12;
+    };
 
-        @Override
-        public void update(ModularCrafterBuild build) {
-            float efficiency = baseEfficiency + Math.min(maxBoost, boostScale * build.block.sumAttribute(attribute, build.tileX(), build.tileY()) + attribute.env());
-
-            Log.info(efficiency);
-
-            if(minEfficiency != -1 && efficiency < minEfficiency) {
-                build.setPin(efficiencyPin, 0);
-                return;
-            }
-
-            build.data.put(efficiencyPin, efficiency);
-        }
-    }
-
-    public static class ItemCraftingModule extends CraftingModule{
-        public ItemStack outputItem;
-        public ItemStack[] outputItems;
-
-        public ItemStack[] inputItems;
-
-        @Override
-        public void update(ModularCrafterBuild build) {
-            super.update(build);
-
-        }
-
-        @Override
-        public void craft(ModularCrafterBuild build) {
-            if(outputItem != null) build.items.add(outputItem.item, outputItem.amount);
-
-            if(inputItems != null) build.items.remove(inputItems);
-
-            if(outputItems != null) {
-                for (ItemStack item : outputItems) {
-                    build.items.add(item.item, item.amount);
-                }
-            }
-        }
-    }
+    public static final float ON = 1, OFF = 0;
 
     public class ModularCrafterBuild extends Building {
 
@@ -213,6 +222,28 @@ public class ModularCrafter extends Block {
         public void update() {
             super.update();
             modules.each(c -> c.update(this));
+        }
+
+        @Override
+        public void write(Writes write) {
+            super.write(write);
+            write.i(data.size);
+            int[] keys = data.keys().toArray().toArray();
+
+            for(int i: keys){
+                write.i(i);
+                write.f(data.get(i));
+            }
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+            data = new IntFloatMap();
+            int len = read.i();
+            for (int i = 0; i < len; i++){
+                data.put(read.i(), read.f());
+            }
         }
     }
 }
