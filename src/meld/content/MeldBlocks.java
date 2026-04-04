@@ -113,7 +113,7 @@ public class MeldBlocks {
             ));
             health = 120;
 
-            liquidCapacity = 100;
+            liquidCapacity = 200;
             solid = false;
             placeableLiquid = true;
         }};
@@ -204,11 +204,10 @@ public class MeldBlocks {
             size = 1;
         }};
 
+        //TODO: Lock players out of using in badlands/storm plains route if waste becomes too big of an issue
         channelVent = new ChannelVent("pressure-vent"){{
             requirements(Category.liquid, with(
-                    MeldItems.debris, 8,
-                    MeldItems.carbolith,
-                    8
+                    MeldItems.debris, 8
             ));
             health = 180;
             armor = 1;

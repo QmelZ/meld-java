@@ -4,6 +4,8 @@ import arc.Core;
 import arc.audio.Sound;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
+import arc.util.Eachable;
+import mindustry.entities.units.BuildPlan;
 import mindustry.gen.Sounds;
 
 //A switch + liquid junction
@@ -28,6 +30,17 @@ public class ChannelValve extends FlexibleSizeJunction {
 
         config(Boolean.class, (ValveBuild entity, Boolean b) -> entity.enabled = b);
     }
+
+    @Override
+    public TextureRegion[] icons() {
+        return new TextureRegion[]{onRegion};
+    }
+
+    public TextureRegion getPlanRegion(BuildPlan plan, Eachable<BuildPlan> list){
+        if(plan.config instanceof Boolean b && b) return onRegion;
+        return fullIcon;
+    }
+
 
     public class ValveBuild extends FlexibleBuild{
 

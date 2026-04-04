@@ -9,11 +9,13 @@ import arc.graphics.g2d.TextureRegion;
 import arc.math.Mathf;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Eachable;
 import arc.util.Log;
 import arc.util.Tmp;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
 import mindustry.Vars;
+import mindustry.entities.units.BuildPlan;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.gen.Sounds;
@@ -37,14 +39,19 @@ public class ValveController extends FlexibleSizeJunction{
     public TextureRegion[] signRegions = new TextureRegion[2];
     public TextureRegion bottomRegion = new TextureRegion();
 
-    public Color indicatorColor = Pal.health, fillColor = Pal.heal;
+    public Color indicatorColor = Pal.health, overflowColor = Pal.surge, fillColor = Pal.heal;
 
     @Override
     public void load() {
         super.load();
         bottomRegion = Core.atlas.find(name + "-bottom");
-        signRegions[0] = Core.atlas.find(name + "-on", "clear");
-        signRegions[1] = Core.atlas.find(name + "-off", "clear");
+        signRegions[0] = Core.atlas.find(name + "-sign", "clear");
+        signRegions[1] = Core.atlas.find(name + "-sign-inverted", "clear");
+    }
+
+    @Override
+    public TextureRegion[] icons() {
+        return new TextureRegion[]{bottomRegion, signRegions[0], region};
     }
 
     public ValveController(String name) {
@@ -63,10 +70,36 @@ public class ValveController extends FlexibleSizeJunction{
         config(Float.class, (ValveControllerBuild entity, Float f) -> entity.threshold = f);
         config(Float[].class, (ValveControllerBuild entity, Float[] floats) -> {
             entity.threshold = floats[0];
-            Log.info(floats[1]);
             entity.invert = floats[1] == -1f;
         });
     }
+
+    public void drawThreshold(float x, float y, float threshold){
+        Fill.rect(x, y - (1 - threshold)/2f * (Vars.tilesize) - threshold * padding + padding, Vars.tilesize, (Vars.tilesize - padding * 2) * threshold);
+    }
+
+    @Override
+    public void drawPlanRegion(BuildPlan plan, Eachable<BuildPlan> list){
+        float threshold = minPressure;
+        boolean invert = false;
+
+        if(plan.config instanceof Float[] floats){
+            threshold = floats[0];
+            invert = floats[1] == -1f;
+        }
+
+        Draw.z(Layer.blockUnder);
+        Draw.rect(bottomRegion, plan.drawx(), plan.drawy());
+
+        Draw.z(Layer.block);
+
+        Draw.color(indicatorColor);
+        drawThreshold(plan.drawx(), plan.drawy(), threshold);
+        Draw.color();
+        Draw.rect(signRegions[invert ? 1 : 0], plan.drawx(), plan.drawy(), plan.rotation * 90);
+        Draw.rect(region, plan.drawx(), plan.drawy());
+    }
+
 
     public class ValveControllerBuild extends FlexibleBuild{
 
@@ -143,15 +176,20 @@ public class ValveController extends FlexibleSizeJunction{
             Draw.z(Layer.block);
 
 
-
             //Im sure theres a simpler formula but like... come on
+
+            //
+            float fin2 = Mathf.clamp(lastTotal);
+            Draw.color(fillColor);
+            drawThreshold(x, y, fin2);
+
             float fin = threshold;
             Draw.color(indicatorColor);
-            Fill.rect(x, y - (1 - fin)/2f * (Vars.tilesize) - fin * padding + padding, Vars.tilesize, (Vars.tilesize - padding * 2) * fin);
+            drawThreshold(x, y, fin);
 
-            fin = Mathf.clamp(lastTotal);
-            Draw.color(fillColor);
-            Fill.rect(x, y - (1 - fin)/2f * (Vars.tilesize) - fin * padding + padding, Vars.tilesize, (Vars.tilesize - padding * 2) * fin);
+            float finFree = Math.min(fin, fin2);
+            Draw.color(overflowColor);
+            drawThreshold(x, y, finFree);
 
             Draw.color();
 
