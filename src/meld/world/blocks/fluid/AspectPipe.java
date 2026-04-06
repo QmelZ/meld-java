@@ -2,18 +2,26 @@ package meld.world.blocks.fluid;
 
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
+import arc.struct.Seq;
+import arc.util.Log;
+import meld.content.MeldLiquids;
 import meld.world.blocks.crafting.RecipeCrafter;
 import mindustry.Vars;
+import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.type.Liquid;
 import mindustry.world.Block;
 import mindustry.world.Tile;
+import mindustry.world.blocks.distribution.DuctBridge;
+import mindustry.world.blocks.liquid.ArmoredConduit;
 import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidRouter;
 
 import static meld.content.MeldLiquids.*;
 
-public class AspectPipe extends Conduit {
+public class AspectPipe extends ArmoredConduit {
+
+    Seq<Liquid> liquidSeq = new Seq<>();
     static final float rotatePad = 6, hpad = rotatePad / 2f / 4f;
     static final float[][] rotateOffsets = {{hpad, hpad}, {-hpad, hpad}, {-hpad, -hpad}, {hpad, -hpad}};
 
@@ -23,7 +31,7 @@ public class AspectPipe extends Conduit {
 
     @Override
     public boolean blends(Tile tile, int rotation, int otherx, int othery, int otherrot, Block otherblock) {
-        return super.blends(tile, rotation, otherx, othery, otherrot, otherblock) || (otherblock.hasLiquids && !(otherblock instanceof Conduit || otherblock instanceof LiquidRouter));
+        return super.blends(tile, rotation, otherx, othery, otherrot, otherblock) || (otherblock.hasLiquids && !(otherblock instanceof Conduit || otherblock instanceof LiquidRouter) && outletMapping.keys().toSeq().find(l -> otherblock.consumesLiquid(l)) != null);
     }
 
     public class AspectPipeBuild extends ConduitBuild{
@@ -58,20 +66,19 @@ public class AspectPipe extends Conduit {
             float total = 0;
             if(!Mathf.zero(liquids.get(liquid))){
 
-                this.incrementDump(this.proximity.size);
+                incrementDump(this.proximity.size);
                 other = other.getLiquidDestination(this, liquid);
-
                 if (other == null || !other.block.hasLiquids || other.liquids == null) return 0;
 
                 //Transfer regular liquid
-                if(this.canDumpLiquid(other, liquid)) {
+                if(canDumpLiquid(other, liquid)) {
                     float ofract = other.liquids.get(liquid) / other.block.liquidCapacity;
                     float fract = this.liquids.get(liquid) / this.block.liquidCapacity;
                     if (ofract < fract) {
                         float amount = (fract - ofract) * this.block.liquidCapacity;
 
-
                         float flow = Math.min(other.block.liquidCapacity - other.liquids.get(liquid), amount);
+
                         if (other.acceptLiquid(this, liquid)) {
                             other.handleLiquid(this, liquid, flow);
                             this.liquids.remove(liquid, flow);
@@ -103,6 +110,15 @@ public class AspectPipe extends Conduit {
                 }
             }
             return total;
+        }
+
+
+        //TODO: Figure out why this even has to be changed to get aspect pipes routing backwards when vanilla conduits don't
+        @Override
+        public boolean acceptLiquid(Building source, Liquid liquid){
+            noSleep();
+            return (liquids.current() == liquid || liquids.currentAmount() < 0.2f)
+                    && (tile == null || source == this || (source.relativeTo(tile.x, tile.y) + 2) % 4 != rotation || source instanceof AspectPipeBuild);
         }
     }
 }

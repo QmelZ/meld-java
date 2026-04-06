@@ -1,8 +1,14 @@
 package meld.content;
 
 import arc.*;
+import arc.graphics.Blending;
 import arc.graphics.Color;
+import arc.math.Angles;
 import arc.math.Interp;
+import arc.math.Mathf;
+import arc.math.geom.Vec2;
+import arc.util.Log;
+import arc.util.Tmp;
 import meld.*;
 import meld.entities.bullet.OutflowBulletType;
 import meld.entities.bullet.TransitionBulletType;
@@ -18,9 +24,7 @@ import meld.world.blocks.crafting.modules.*;
 import meld.world.blocks.crafting.modules.GateModule.ConsumeCondition;
 import meld.world.blocks.crafting.modules.GateModule.OutputCondition;
 import meld.world.blocks.crafting.recipe.TimedRecipe;
-import meld.world.blocks.fluid.ChannelValve;
-import meld.world.blocks.fluid.ChannelVent;
-import meld.world.blocks.fluid.VisualAspectPipe;
+import meld.world.blocks.fluid.*;
 import meld.world.blocks.items.PriorityInputSplitter;
 import meld.world.blocks.production.SingleBeamDrill;
 import meld.world.meta.*;
@@ -29,6 +33,7 @@ import mindustry.content.*;
 import mindustry.entities.bullet.*;
 import mindustry.entities.effect.MultiEffect;
 import mindustry.entities.effect.ParticleEffect;
+import mindustry.entities.part.DrawPart;
 import mindustry.entities.part.HaloPart;
 import mindustry.entities.part.RegionPart;
 import mindustry.entities.part.ShapePart;
@@ -36,6 +41,7 @@ import mindustry.entities.pattern.ShootAlternate;
 import mindustry.entities.pattern.ShootSpread;
 import mindustry.gen.Sounds;
 import mindustry.graphics.Layer;
+import mindustry.graphics.Pal;
 import mindustry.type.*;
 import mindustry.world.Block;
 import mindustry.world.blocks.defense.ForceProjector;
@@ -44,6 +50,7 @@ import mindustry.world.blocks.defense.Wall;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
 import mindustry.world.blocks.defense.turrets.LiquidTurret;
 import mindustry.world.blocks.distribution.*;
+import mindustry.world.blocks.liquid.ArmoredConduit;
 import mindustry.world.blocks.liquid.Conduit;
 import mindustry.world.blocks.liquid.LiquidJunction;
 import mindustry.world.blocks.liquid.LiquidRouter;
@@ -62,7 +69,7 @@ public class MeldBlocks {
     public static Block chute, chuteRouter, chuteBridge, chuteJunction, chuteOverflow, unloadingHub;
 
     public static Block sonarSpire, movementAnchor, nullifier,
-            //Bruiskit: Targets largest, highest hp blocks, functional blocks first, continuously heals
+            //Bruisekit: Targets largest, highest hp blocks, functional blocks first, continuously heals
 
             //Gauze chainheals smallest, lowest hp blocks, low target prio blocks first.
 
@@ -74,7 +81,7 @@ public class MeldBlocks {
 
     public static ModularCrafter gasKiln, rotaryKiln, pneumaticExtruder;
 
-    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelVent, manualValve;
+    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelDirector, channelVent, manualValve, intakeValve, valveController, pipebox;
 
     public static Block sunder, molotov, vivisection;
 
@@ -98,13 +105,14 @@ public class MeldBlocks {
 
     public static void load(){
 
-        channelFace = new LiquidJunction("channel-face"){{
+        channelFace = new FlexibleSizeJunction("channel-face"){{
             requirements(Category.liquid, with(
                     MeldItems.debris, 2
             ));
             health = 120;
             solid = false;
             placeableLiquid = true;
+            usePassedOffset = false;
         }};
 
         channelNode = new LiquidRouter("channel-node"){{
@@ -113,7 +121,7 @@ public class MeldBlocks {
             ));
             health = 120;
 
-            liquidCapacity = 100;
+            liquidCapacity = 200;
             solid = false;
             placeableLiquid = true;
         }};
@@ -169,6 +177,13 @@ public class MeldBlocks {
                         float density = MeldLiquids.aetherDensities.get(MeldLiquids.pollutantMixture, 1);
                         inputLiquids = LiquidStack.with(MeldLiquids.pollutantMixture, outletRate/density);
                         outputLiquids = LiquidStack.with(MeldLiquids.boundAspect, outletRate * multi * 10);
+                    }},
+                    new TimedRecipe(){{
+                        craftTime = 10;
+                        float multi = MeldLiquids.aetherEfficiencies.get(MeldLiquids.thunderingAether, 1);
+                        float density = MeldLiquids.aetherDensities.get(MeldLiquids.thunderingAether, 1);
+                        inputLiquids = LiquidStack.with(MeldLiquids.thunderingAether, outletRate/density);
+                        outputLiquids = LiquidStack.with(MeldLiquids.stormingAspect, outletRate * multi * 10);
                     }}
             );
         }};
@@ -178,7 +193,9 @@ public class MeldBlocks {
                     MeldItems.annealedSilver, 5, MeldItems.glassMallows, 2
             ));
             leaks = false;
-            health = 120;
+            health = 200;
+            armor = 2;
+            insulated = true;
 
             placeableLiquid = true;
 
@@ -188,11 +205,24 @@ public class MeldBlocks {
             junctionReplacement = channelFace;
         }};
 
+        channelDirector = new ChannelDirector("channel-director"){{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 5
+            ));
+
+            health = 200;
+
+            placeableLiquid = true;
+            liquidPressure = 0.5f;
+
+            liquidCapacity = 80;
+            size = 1;
+        }};
+
+        //TODO: Lock players out of using in badlands/storm plains route if waste becomes too big of an issue
         channelVent = new ChannelVent("pressure-vent"){{
             requirements(Category.liquid, with(
-                    MeldItems.debris, 8,
-                    MeldItems.carbolith,
-                    8
+                    MeldItems.debris, 8
             ));
             health = 180;
             armor = 1;
@@ -205,10 +235,50 @@ public class MeldBlocks {
             placeableLiquid = true;
         }};
 
-        manualValve= new ChannelValve("manual-valve"){{
+        manualValve = new ChannelValve("manual-valve"){{
             requirements(Category.liquid, with(
                     MeldItems.debris, 8
             ));
+
+            health = 120;
+
+            solid = false;
+            placeableLiquid = true;
+        }};
+
+        intakeValve = new ChannelValve("intake-valve"){{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 80,
+                    MeldItems.shadesteel, 48
+            ));
+            size = 3;
+
+            health = 800;
+            armor = 8;
+
+            solid = false;
+            placeableLiquid = true;
+        }};
+
+        valveController = new ValveController("valve-controller"){{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 12,
+                    MeldItems.aspectPipe, 6
+            ));
+            size = 1;
+
+            health = 120;
+
+            solid = false;
+            placeableLiquid = true;
+        }};
+
+        pipebox = new Pipebox("pipebox") {{
+            requirements(Category.liquid, with(
+                    MeldItems.debris, 2,
+                    MeldItems.aspectPipe, 4
+            ));
+            size = 1;
 
             health = 120;
 
@@ -513,12 +583,346 @@ public class MeldBlocks {
                     molBullet
             );
 
-            consume(new ConsumeAspects(outletRate, MeldLiquids.aspectEfficiencies, MeldLiquids.aspectDensities));
+            consume(
+                    new ConsumeAspects(outletRate, MeldLiquids.aspectEfficiencies, MeldLiquids.aspectDensities)
+            );
+        }};
+
+        vivisection = new ItemTurret("vivisection"){{
+            requirements(Category.turret, with(MeldItems.debris, 200, MeldItems.silver, 320, MeldItems.resonarum, 60));
+            size = 4;
+            health = 2640;
+            range = 252;
+
+            liquidCapacity = outletRate * 60 * 4;
+            fogRadiusMultiplier = 0.25f;
+            reload = 120;
+
+            shootEffect = Fx.shootBig;
+            shootWarmupSpeed = 0.09f;
+            minWarmup = 0.7f;
+
+            velocityRnd = 0.2f;
+            recoil = 1.5f;
+            inaccuracy = 2;
+            shootCone = 5;
+
+            ammoPerShot = 12;
+            shootY = 8;
+
+            rotate = quickRotate = false;
+
+            shoot = new ShootSpread(){{
+                shots = 1;
+                firstShotDelay = 60;
+            }};
+
+            consume(new ConsumeAspects(outletRate * 3, MeldLiquids.aspectEfficiencies, MeldLiquids.aspectDensities));
+
+            drawer = new DrawTurret(){{
+
+                parts.addAll(
+                    new RegionPart("-jaw"){{
+                        mirror = true;
+                        x = 4.5f;
+                        y = 2;
+                        moveRot = 180;
+                        progress = PartProgress.charge.compress(0, 0.5f);
+                        moves.add(
+                                new PartMove(PartProgress.charge.compress(0.5f, 1).curve(Interp.pow2In),-0.75f, 0.5f, 0));
+                        }}
+                );
+
+                //Define the centers for the center of rotation and starting point
+                Vec2 center = new Vec2(4.5f, 2);
+
+                //Start offset should be endpoint mirrored across the center
+                Vec2 startOffset = new Vec2(4, -20).scl(0.25f);
+                Vec2 endOffset = new Vec2(-18, 20).scl(0.25f);
+                float toMove = Angles.backwardDistance(startOffset.angle(), endOffset.angle());
+
+                float startRad = startOffset.len();
+                float endRad = endOffset.len();
+
+                //Trust me the constant has a reason for it
+                DrawPart.PartProgress base = DrawPart.PartProgress.charge.compress(0, 0.5f);
+                DrawPart.PartMove SPINNNNNNNNBABYYYSPINSPINBABYYEEEEEEEEEE =
+                        new DrawPart.PartMove(){{
+                            rot = 360 * 5;
+                            progress = DrawPart.PartProgress.charge.compress(0.6f, 1).curve(Interp.pow5In);
+                        }};
+                for(int i = 0; i < 2; i++){
+                    int sign = i == 0 ? 1 : -1;
+                    parts.add(
+                            new RegionPart(){{
+                                mirror = false;
+                                name = Meld.prefix("sawblade-large" + (sign == 1 ? "-r" : "-l"));
+                                clampProgress = false;
+
+                                //Starting pos for the sawblades
+                                x = center.x * sign;
+                                y = center.y;
+
+                                moveX = moveY = 0;
+                                growX = growY = 1;
+                                xScl = yScl = 0;
+                                growProgress = PartProgress.charge.compress(0, 0.5f).curve(Interp.pow2In);
+
+                                moves.addAll(
+                                        new PartMove(){{
+                                            x = sign;
+                                            progress = p -> {
+                                                //Go from a clockwise starting position to a counterclockwise position
+                                                Tmp.v1.trns(Angles.moveToward(startOffset.angle(), endOffset.angle(), -toMove * base.get(p)), Mathf.lerp(startRad, endRad, base.get(p)));
+                                                return Tmp.v1.x;
+                                            };
+                                        }},
+                                        new PartMove(){{
+                                            y = 1;
+                                            progress = p -> {
+                                                //counterclockwise rotation from start till end
+                                                Tmp.v1.trns(Angles.moveToward(startOffset.angle(), endOffset.angle(), -toMove * base.get(p)), Mathf.lerp(startRad, endRad, base.get(p)));
+                                                return Tmp.v1.y;
+                                            };
+                                        }},
+                                        new PartMove(){{
+                                            rot = -180 * sign;
+                                            progress = base.inv();
+                                        }},
+                                        SPINNNNNNNNBABYYYSPINSPINBABYYEEEEEEEEEE
+                                );
+                            }}
+                    );
+                }
+
+                parts.addAll(
+                        new RegionPart(){{
+                            name = Meld.prefix("sawblade-large-glow");
+                            x = 0;
+                            y = 9;
+                            blending = Blending.additive;
+                            color = Color.white.cpy().a(0);
+                            colorTo = Color.valueOf("6ed88e");
+                            progress = PartProgress.charge.compress(0.5f, 1).curve(Interp.pow2Out).slope();
+                            outline = false;
+                            moves.addAll(
+                                    SPINNNNNNNNBABYYYSPINSPINBABYYEEEEEEEEEE
+                            );
+                        }},
+                        new RegionPart("-plate"){{
+                            mirror = true;
+                            moveX = 0.5f;
+                            moveY = -0.5f;
+                            moveRot = 10;
+                            progress = PartProgress.warmup;
+
+                            moves.addAll(
+                                    new PartMove(PartProgress.recoil,1.25f, -1.25f, 15),
+                                    new PartMove(PartProgress.charge.compress(0.5f, 1).curve(Interp.pow2In),-0.75f, 0, 25)
+                            );
+                        }},
+                        new RegionPart("-body"){{
+                            progress = PartProgress.charge.compress(0.75f, 1).curve(Interp.pow5In);
+                            moveY = 0.75f;
+                            children.addAll(
+                                    new RegionPart("-body-glow"){{
+                                        blending = Blending.additive;
+                                        outline = false;
+                                        color = Pal.turretHeat;
+                                        colorTo = Color.valueOf("6ed88e");
+                                        progress = PartProgress.charge.compress(0.5f, 1).curve(Interp.pow5In);
+                                    }}
+                            );
+                        }}
+                );
+            }};
+
+            ammoTypes.putAll(
+                    MeldItems.resonarum,
+                    new BasicBulletType(5, 160, Meld.prefix("sawblade-large")){{
+                        frontColor = Color.white;
+                        backColor = Color.clear;
+                        pierce = true;
+                        pierceCap = 5;
+                        pierceDamageFactor = 0.05f;
+                        lifetime = 52;
+                        knockback = 50;
+                        impact = true;
+                        spin = 300;
+                        width = height = 24 * 2;
+                        hitShake = 10.75f;
+                        shrinkInterp = Interp.pow10In;
+                        shrinkX = shrinkY = 0;
+                        ammoMultiplier = 1;
+
+                        hitEffect = new ParticleEffect(){{
+                            lifetime = 15;
+                            line = true;
+                            lenTo = 8;
+                            strokeFrom = 2;
+                            strokeTo = 0.5f;
+                            interp = Interp.pow5Out;
+                            sizeInterp = Interp.pow5Out;
+                            baseRotation = 25;
+                            cone = 35;
+                            colorFrom = Color.valueOf("85c799");
+                            colorTo = Color.valueOf("4bb66b");
+                        }};
+                        despawnEffect = Fx.none;
+                        intervalBullet = new ExplosionBulletType(){{
+                            killShooter = false;
+                            fragBullets = 2;
+                            fragRandomSpread = 15;
+                            fragSpread = 35;
+                            fragAngle = 180;
+                            fragVelocityMin = 0.5f;
+                            fragVelocityMax = 1;
+                            fragBullet = new BulletType(){{
+                                spawnBullets.addAll(
+                                        new TransitionBulletType(){{
+                                            fragVelocityMin = 1;
+                                            fragBullets = 1;
+                                            fragBullet = new BulletType(2.5f, 5) {{
+
+                                                drag = 0.2f;
+                                                hitEffect = despawnEffect = Fx.none;
+                                                lifetime = 30;
+                                                bulletInterval = 5;
+                                                intervalBullets = 1;
+                                                lightRadius = 0;
+                                                parts.addAll(
+                                                        new RegionPart() {{
+                                                            name = Meld.prefix("crystalline-smog");
+                                                            outline = false;
+                                                            color = Color.white.cpy().a(0f);
+                                                            colorTo = Color.white.cpy().a(0.1f);
+                                                            progress = PartProgress.life.curve(Interp.slope);
+                                                            moveRot = 360;
+                                                            blending = Blending.additive;
+                                                            layer = Layer.flyingUnitLow;
+
+                                                            xScl = yScl = 0.5f;
+                                                            growX = growY = 0.5f;
+                                                            growProgress = PartProgress.life.compress(0, 1).curve(Interp.pow2In);
+                                                        }}
+                                                );
+
+                                                intervalBullet = new TransitionBulletType() {{
+                                                    fragBullets = 2;
+                                                    fragVelocityMin = 0.5f;
+                                                    fragVelocityMax = 1;
+
+                                                    fragBullet = new BasicBulletType(4.2f, 2, Meld.prefix("dual-spike")) {{
+                                                        width = 6;
+                                                        height = 2;
+                                                        frontColor = MeldPal.resoShardFront;
+                                                        backColor = MeldPal.resoShardBack;
+                                                        drag = 0.15f;
+                                                        lifetime = 30;
+
+                                                        splashDamage = 5;
+                                                        splashDamageRadius = 8;
+                                                        hittable = false;
+                                                        spin = 15;
+                                                        hitEffect = despawnEffect = Fx.none;
+                                                        status = MeldStatusEffects.lacerated;
+                                                        statusDuration = 20;
+                                                        sticky = true;
+                                                        stickyExtraLifetime = 60;
+
+                                                        lightRadius = 0;
+
+                                                        float xScale = width / 20f;
+                                                        float yScale = height / 20;
+
+                                                        parts.addAll(
+                                                                new RegionPart() {{
+                                                                    name = Meld.prefix("dual-spike");
+                                                                    outline = false;
+                                                                    rotation = 60;
+                                                                    xScl = xScale;
+                                                                    yScl = yScale;
+                                                                    moveRot = 15 * 60;
+                                                                    progress = PartProgress.life;
+
+                                                                    growX = -xScale;
+                                                                    growY = -yScale;
+                                                                    growProgress = PartProgress.life.curve(Interp.pow2In);
+                                                                }},
+                                                                new RegionPart() {{
+                                                                    name = Meld.prefix("dual-spike");
+                                                                    outline = false;
+                                                                    rotation = 120;
+                                                                    xScl = xScale;
+                                                                    yScl = yScale;
+                                                                    moveRot = 7.5f * 60;
+                                                                    progress = PartProgress.life;
+                                                                    color = MeldPal.resoShardBack;
+
+                                                                    growX = -xScale;
+                                                                    growY = -yScale;
+                                                                    growProgress = PartProgress.life.curve(Interp.pow5In);
+                                                                }}
+                                                        );
+                                                    }};
+                                                }};
+                                            }};
+                                        }}
+                                );
+                                damage = 5;
+                                speed = 1.5f;
+                                drag = 0.15f;
+                                lifetime = 120;
+                                homingPower = 0.05f;
+                                frontColor = Color.valueOf("85c799");
+                                pierce = true;
+                                status = MeldStatusEffects.lacerated;
+                                statusDuration = 15;
+                                hitEffect = Fx.none;
+                                despawnEffect = Fx.none;
+                                absorbable = hittable = reflectable = false;
+                                parts.addAll(
+                                        new RegionPart(){{
+                                            name = Meld.prefix("crystalline-smog");
+                                            outline = false;
+                                            color = Color.clear;
+                                            colorTo = Color.white.cpy().a(1f);
+                                            progress = PartProgress.life.compress(0, 0.65f).curve(Interp.pow5Out).curve(Interp.slope);
+                                            moveRot = 360;
+                                            blending = Blending.additive;
+
+                                            growX = growY = 2;
+                                            growProgress = PartProgress.life.compress(0, 0.65f).curve(Interp.pow2In);
+                                        }},
+                                        //less glowey layer
+                                        new RegionPart(){{
+                                            name = Meld.prefix("crystalline-smog");
+                                            outline = false;
+                                            color = Color.clear;
+                                            colorTo = Color.white.cpy().a(0.6f);
+                                            progress = PartProgress.life.curve(Interp.pow5Out).curve(Interp.slope);
+                                            moveRot = 180 * 1.5f;
+                                            layer = Layer.flyingUnitLow;
+
+                                            growX = growY = 4;
+                                            growProgress = PartProgress.life.compress(0, 0.8f).curve(Interp.pow2Out);
+                                        }}
+                                );
+                            }};
+                        }};
+                        bulletInterval = 4;
+                        intervalBullets = 1;
+                        intervalSpread = 120;
+                        intervalRandomSpread = 15;
+                    }}
+            );
         }};
 
         shadesteelShingles = new Wall("shadesteel-shingles"){{
-            requirements(Category.defense, with(MeldItems.shadesteel, 24));
-            health = 800;
+            requirements(Category.defense, with(MeldItems.shadesteel, 64));
+            size = 2;
+            health = 2400;
+            buildCostMultiplier = 2f;
         }};
 
         silverHusk = new RegenProjector("silver-husk"){{
@@ -537,11 +941,12 @@ public class MeldBlocks {
                 new DrawRegion("-bottom"){{
                     layer = Layer.block - 1;
                 }},
-                new DrawLiquidTile(MeldLiquids.aspect),
+                    new DrawLiquidTile(MeldLiquids.aspect),
+                    new DrawLiquidTile(MeldLiquids.boundAspect),
                 new DrawDefault()
             );
 
-            consume(new ConsumeLiquid(MeldLiquids.aspect, outletRate/2));
+            consume(new ConsumeAspects(outletRate/2, MeldLiquids.aspectEfficiencies, MeldLiquids.aspectDensities));
         }};
 
         coreRaft = new CoreRaft("core-raft"){
@@ -647,19 +1052,23 @@ public class MeldBlocks {
         }};
 
         pneumaticPulsear = new SingleBeamDrill("pneumatic-pulsar"){{
-            requirements(Category.production, with(MeldItems.debris, 200, MeldItems.carbolith, 150, MeldItems.aspectPipe, 300));
-            health = 1800;
+            requirements(Category.production, with(MeldItems.debris, 500, MeldItems.carbolith, 250, MeldItems.shadesteel, 350, MeldItems.aspectPipe, 300));
+            health = 2400;
+            armor = 40;
+
             size = 5;
             itemCapacity = 100;
             baseProductivity = 50;
             drillTime = 360;
+            range = 8;
 
             transformItems.putAll(
                     MeldItems.clayMallows, MeldItems.glassMallows,
                     MeldItems.tenbris, MeldItems.shadesteel
             );
 
-            range = 8;
+            liquidCapacity = 50;
+
 
             consume(new ConsumeAspects(outletRate/2, MeldLiquids.outletEfficiencies, MeldLiquids.outletDensities));
         }};
@@ -1101,7 +1510,7 @@ public class MeldBlocks {
             health = 300;
         }};
 
-        bruisekit = new Bruiskit("bruisekit"){{
+        bruisekit = new Bruisekit("bruisekit"){{
             requirements(Category.effect, with(
                     MeldItems.debris, 60,
                     MeldItems.aspectPipe, 45,

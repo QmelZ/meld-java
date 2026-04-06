@@ -12,9 +12,13 @@ import arc.util.Log;
 import arc.util.Time;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
+import meld.content.MeldBullets;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.entities.Damage;
+import mindustry.entities.Effect;
+import mindustry.entities.bullet.BulletType;
+import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Sounds;
 import mindustry.type.Item;
@@ -26,16 +30,23 @@ import mindustry.world.meta.BlockFlag;
 //HAS TO be an odd number in size.
 public class SingleBeamDrill extends Block {
 
-    public int range = 5, tier = 4;
+    public int range = 10, tier = 4;
 
-    public float minHealthf = 0.25f;
+    public float minHealthf = 0.75f;
     //I know that sounds like a lot of items at once but well... yeah it's a lot of items at once
-    public int baseProductivity = 30;
+    public int baseProductivity = 50;
+
+    //Additional items mined for each tile unused in the range
+    public int distanceProductivity = 5;
     public float selfDamage = 400;
     public float targetDamage = 2400;
     public ObjectFloatMap<Item> itemMultipliers = new ObjectFloatMap<>();
     public ObjectMap<Item, Item> transformItems = new ObjectMap<>();
     public float drillTime = 300;
+
+    public BulletType bigExplosion;
+
+    public Effect shootEffect = Fx.shootQuellPulse, trailEffect = Fx.explosion, hitEffect = Fx.massiveExplosion;
 
     public SingleBeamDrill(String name) {
         super(name);
@@ -50,6 +61,7 @@ public class SingleBeamDrill extends Block {
         ambientSound = Sounds.loopMineBeam;
         envEnabled |= 2;
         flags = EnumSet.of(new BlockFlag[]{BlockFlag.drill});
+        bigExplosion = MeldBullets.pulsarBlast;
     }
 
     public class SingleBeamBuild extends Building{
@@ -76,18 +88,27 @@ public class SingleBeamDrill extends Block {
             damage(selfDamage);
 
             Item found = null;
+            int unusedTiles = range + 1;
 
             int offset = (size + 1)/2;
             Point2 dir = Geometry.d4(rotation);
 
             int tx = tileX(), ty = tileY();
+            Tile other = Vars.world.tile(tx + dir.x, ty + dir.y);
+            Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 3, 90000, Vars.tilesize * 3, true, shootEffect);
+            Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 5, 300, Vars.tilesize * 2, true, shootEffect);
+
             for(int i = 0; i < range; i++){
+                unusedTiles--;
                 int j = i + offset;
-                Tile other = Vars.world.tile(tx + dir.x * j, ty + dir.y * j);
+                other = Vars.world.tile(tx + dir.x * j, ty + dir.y * j);
 
                 if(other.solid()){
-                    Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 5, 30000, Vars.tilesize * 3, true);
-                    Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 15, 0, Vars.tilesize * 2, true);
+                    if(bigExplosion == null){
+                        Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 5, 30000, Vars.tilesize * 3, true, hitEffect);
+                        Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 15, 0, Vars.tilesize * 2, true, hitEffect);
+                    }
+                    else bigExplosion.create(this, Team.derelict, other.worldx() - dir.x * Vars.tilesize, other.worldy() - dir.y * Vars.tilesize, 0);
                     if(other.build != null) other.build.damage(targetDamage);
 
                     Item drop = other.wallDrop();
@@ -99,7 +120,7 @@ public class SingleBeamDrill extends Block {
                     break;
                 }
                 else {
-                    Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 2, 0, Vars.tilesize * 3, true);
+                    Damage.dynamicExplosion(other.worldx(), other.worldy(), 5, 2, 0, Vars.tilesize * 3, true, trailEffect);
                 }
 
             }
@@ -108,7 +129,7 @@ public class SingleBeamDrill extends Block {
 
             found = transformItems.get(found, found);
 
-            int mined = (int)(baseProductivity * itemMultipliers.get(found, 1));
+            int mined = (int)((baseProductivity + distanceProductivity * unusedTiles) * itemMultipliers.get(found, 1));
 
             mined = Mathf.ceilPositive(Math.min(itemCapacity - items.get(found), mined));
             items.add(found, mined);
