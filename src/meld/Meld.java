@@ -9,6 +9,7 @@ import arc.struct.Seq;
 import arc.util.Time;
 import arc.util.Tmp;
 import meld.content.*;
+import meld.core.*;
 import meld.graphics.MeldRegions;
 import meld.meta.MeldStatUnit;
 import mindustry.Vars;
