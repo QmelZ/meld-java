@@ -37,8 +37,11 @@ import mindustry.entities.part.HaloPart;
 import mindustry.entities.part.RegionPart;
 import mindustry.entities.part.ShapePart;
 import mindustry.entities.pattern.ShootAlternate;
+import mindustry.entities.pattern.ShootBarrel;
 import mindustry.entities.pattern.ShootSpread;
+import mindustry.gen.Bullet;
 import mindustry.gen.Sounds;
+import mindustry.gen.Statusc;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.type.*;
@@ -80,9 +83,9 @@ public class MeldBlocks {
 
     public static ModularCrafter gasKiln, rotaryKiln, pneumaticExtruder;
 
-    public static Block channelNode, channelFace, aspectOutlet, aspectChannel, channelDirector, channelVent, manualValve, intakeValve, valveController, pipebox;
+    public static Block channelNode, channelHub, channelFace, aspectOutlet, aspectChannel, channelDirector, channelVent, manualValve, intakeValve, valveController, pipebox;
 
-    public static Block sunder, molotov, vivisection;
+    public static Block sunder, shredstorm, molotov, vivisection;
 
     public static Block silverHusk, shadesteelShingles;
 
@@ -202,6 +205,15 @@ public class MeldBlocks {
             size = 1;
             botColor = Color.white;
             junctionReplacement = channelFace;
+        }};
+
+        channelHub = new LiquidRouter("channel-hub"){{
+            requirements(Category.liquid, with(MeldItems.debris, 80, MeldItems.shadesteel, 120));
+            size = 4;
+
+            health = 120 * 16;
+            armor = 8;
+            liquidCapacity = 100 * 100;
         }};
 
         channelDirector = new ChannelDirector("channel-director"){{
@@ -339,78 +351,164 @@ public class MeldBlocks {
                 shots = 2;
             }};
 
-            ammoTypes.put(
+            ammoTypes.putAll(
                     MeldItems.debris,
-                    new FlakBulletType(){{
-                        collidesGround = true;
+                    MeldBullets.sunderDebris,
+                    MeldItems.glassMallows,
+                    MeldBullets.sunderGlass
+            );
+        }};
 
-                        scaleLife = true;
+        shredstorm = new ItemTurret("shredstorm"){{
+            requirements(Category.turret, with(
+                    MeldItems.debris, 45,
+                    MeldItems.silver, 60
+            ));
+            size = 2;
+            health = 600;
+            range = 200;
 
-                        speed = 6;
+            fogRadiusMultiplier = 0.25f;
+            reload = 120;
+            shootEffect = Fx.shootBig;
+            shootWarmupSpeed = 0.25f;
+            minWarmup = 0.7f;
+
+            rotateSpeed = 15;
+
+            velocityRnd = 0.3f;
+            recoil = 1.5f;
+            shootCone = 25;
+
+            shootSound = Sounds.shootFuse;
+
+            rotate = quickRotate = false;
+
+            shoot = new ShootBarrel(){{
+                shotDelay = 5;
+                shots = 7;
+
+                float[] spreadCone = new float[]{0, 3, 6, 15};
+                barrels = new float[]{
+                        0, 0, spreadCone[0],
+                        0, 0, -spreadCone[2],
+                        0, 0, spreadCone[1],
+                        0, 0, -spreadCone[1],
+                        0, 0, spreadCone[3],
+                        0, 0, spreadCone[2],
+                        0, 0, -spreadCone[3]
+                };
+            }};
+
+            inaccuracy = 2;
+
+            shootY = 7;
+
+            ammoPerShot = 4;
+            maxAmmo = 16;
+
+            drawer = new DrawTurret(){{
+                parts.addAll(
+                        new RegionPart("-plate"){{
+                            progress = PartProgress.warmup;
+                            mirror = true;
+                            under = false;
+                            moveX = 1;
+                            moveY = -2.55f;
+                            moveRot = -15;
+                        }},
+                        new RegionPart("-plate"){{
+                            progress = PartProgress.warmup;
+                            mirror = true;
+                            under = false;
+                            moveX = -1;
+                            moveY = -3.55f;
+                            moveRot = 15;
+                        }},
+                        new RegionPart("-barrel"){{
+                            progress = PartProgress.warmup;
+                            moveY = 1;
+                            under = true;
+
+                            moves.addAll(
+                                    new PartMove(PartProgress.recoil, 0, -1.25f, 0)
+                            );
+                        }}
+                );
+            }};
+
+            ammoTypes.putAll(
+                    MeldItems.debris,
+                    new BasicBulletType(){{
                         damage = 2;
-                        lifetime = 30;
-                        width = 3;
-                        height = 8;
-                        splashDamage = 10;
-                        splashDamageRadius = 24;
+                        lifetime = 5;
+                        speed = 12;
+                        sprite = Meld.prefix("clump");
+                        width = 8;
+                        height = 10;
+                        shrinkY = 0;
 
-                        knockback = 1;
+                        despawnHit = true;
 
-                        despawnEffect = Fx.none;
-                        hitEffect = new MultiEffect(
-                                new ParticleEffect(){{
-                                    lifetime = 13;
-                                    particles = 3;
-                                    length = 15;
-                                    sizeFrom = 3;
-                                    sizeTo = 0;
-                                    sizeInterp = Interp.pow2In;
-                                    colorFrom = colorTo = MeldPal.shockwaveGray;
-                                }},
-                                new ParticleEffect(){{
-                                    lifetime = 9;
-                                    line = true;
-                                    particles = 2;
-                                    length = 24;
-                                    lenFrom = 4;
-                                    lenTo = 0;
-                                    strokeFrom = strokeTo = 2;
+                        fragLifeMin = 0.6f;
+                        ammoMultiplier = 2;
 
-                                    interp = Interp.pow2Out;
-                                    sizeInterp = Interp.pow2In;
-                                    colorFrom = colorTo = MeldPal.sparkOrange;
-                                }}
-                        );
+                        fragRandomSpread = 5;
+                        fragBullets = 3;
 
-                        fragOnAbsorb = false;
-                        shrinkY = 0.2f;
-                        fragRandomSpread = 25;
+                        fragBullet = new BasicBulletType(12, 0.25f, Meld.prefix("clump")){{
+                            lifetime = 21;
+                            drag = 0.01f;
+                            width = 6;
+                            height = 12;
+                            shrinkX = 0.7f;
+                            shrinkY = 0.2f;
 
-                        fragBullets = 5;
-                        fragBullet = new BasicBulletType(){{
-                            lightRadius = 0;
-                            speed = 8;
-                            lifetime = 20;
+                            splashDamage = 1;
+                            splashDamageRadius = 20;
+                            knockback = 0.25f;
+                            impact = true;
 
-                            shrinkY = 1;
-                            shrinkX = 1;
-                            shrinkInterp = Interp.pow5In;
+                            hitEffect = Fx.none;
+                            despawnEffect = Fx.none;
+                            setDefaults = false;
+                            despawnHit = false;
+                            fragOnHit = true;
 
-                            sticky = true;
-                            stickyExtraLifetime = 60;
                             pierce = true;
                             pierceCap = 2;
-                            damage = 3;
-                            splashDamage = 1;
-                            splashDamageRadius = 2;
 
-                            width = 3;
-                            height = 8;
+                            fragBullets = 3;
+                            fragRandomSpread = 60;
+                            fragAngle = 180;
 
-                            collidesGround = true;
-                            hitEffect = despawnEffect = Fx.none;
+                            bulletInterval = 2;
+                            fragBullet = new BasicBulletType(9, 2, Meld.prefix("clump")){{
+                                    speed = 9;
+                                    damage = 0.5f;
+                                    lifetime = 8;
+                                    drag = 0.002f;
+                                    width = 2;
+                                    height = 6;
+                                    shrinkY = 0.2f;
+                                    shrinkX = 1;
+                                    sticky = true;
+                                    stickyExtraLifetime = 120;
+
+                                    hitEffect = Fx.none;
+                                    despawnEffect = Fx.none;
+                                    despawnHit = false;
+
+                                    pierce = true;
+                                    pierceCap = 2;
+                                    status = MeldStatusEffects.impaled;
+                                    statusDuration = 5;
+                            }};
                         }};
-                    }}
+                    }},
+                    MeldItems.silver, MeldBullets.shredSilver,
+                    MeldItems.annealedSilver, MeldBullets.shredSilver
+
             );
         }};
 
@@ -441,11 +539,13 @@ public class MeldBlocks {
             shootCone = 5;
 
             BulletType molBullet = new OutflowBulletType(){{
+                layer = Layer.bullet + 1;
                 //HHJKGHJGJK.
-                collidesTiles = false;
-                collides = false;
+                collidesTiles = true;
+                collides = true;
                 collidesAir = false;
                 scaleLife = true;
+
                 hitShake = 1.0F;
                 hitSound = Sounds.explosionArtillery;
                 hitEffect = Fx.flakExplosion;
@@ -456,9 +556,10 @@ public class MeldBlocks {
                 trailEffect = Fx.artilleryTrail;
                 trailChance = 0.35f;
 
-                speed = 7;
+                trailLength = 8;
+                speed = 3.5f;
                 damage = 1;
-                lifetime = 46;
+                lifetime = 46 * 2;
                 width = 18;
                 height = 24;
                 status = MeldStatusEffects.aspectBurn;
@@ -466,10 +567,9 @@ public class MeldBlocks {
                 frontColor = Color.white;
                 backColor = Color.valueOf("cbdbfc");
 
-                splashDamage = 4;
-                splashDamageRadius = 8;
+                splashDamage = 40;
+                splashDamageRadius = 43;
 
-                collidesTiles = false;
                 makeFire = true;
                 hitShake = 2.5f;
 
@@ -484,7 +584,7 @@ public class MeldBlocks {
 
                 fragRandomSpread = 360;
 
-                outflowBullet = new ExplosionBulletType(){{
+                outflowBullet = new TransitionBulletType(){{
                     hitEffect = despawnEffect = Fx.none;
                     damage = splashDamage = 0;
                     fragBullets = 3;
@@ -745,7 +845,7 @@ public class MeldBlocks {
                         pierceCap = 5;
                         pierceDamageFactor = 0.05f;
                         lifetime = 52;
-                        knockback = 50;
+                        knockback = 120;
                         impact = true;
                         spin = 300;
                         width = height = 24 * 2;
@@ -811,7 +911,14 @@ public class MeldBlocks {
                                                     fragVelocityMin = 0.5f;
                                                     fragVelocityMax = 1;
 
-                                                    fragBullet = new BasicBulletType(4.2f, 2, Meld.prefix("dual-spike")) {{
+                                                    fragBullet = new BasicBulletType(4.2f, 2, Meld.prefix("dual-spike")) {
+                                                        @Override
+                                                        public void update(Bullet b){
+                                                            if(b.stickyTarget instanceof Statusc s){
+                                                                s.apply(MeldStatusEffects.lacerated, 60);
+                                                            }
+                                                        }
+                                                        {
                                                         width = 6;
                                                         height = 2;
                                                         frontColor = MeldPal.resoShardFront;
@@ -1208,7 +1315,7 @@ public class MeldBlocks {
         }};
 
         rotaryKiln = new ModularCrafter("rotary-kiln"){{
-            requirements(Category.crafting, with(MeldItems.debris, 250, MeldItems.cruciblePlating, 150));
+            requirements(Category.crafting, with(MeldItems.debris, 350, MeldItems.cruciblePlating, 150));
             size = 5;
 
             hasItems = true;
@@ -1311,7 +1418,7 @@ public class MeldBlocks {
         }};
 
         pneumaticExtruder = new ModularCrafter("pneumatic-extruder"){{
-            requirements(Category.crafting, with(MeldItems.debris, 60, MeldItems.cruciblePlating, 40));
+            requirements(Category.crafting, with(MeldItems.debris, 120));
             size = 3;
 
             hasItems = true;
@@ -1321,12 +1428,13 @@ public class MeldBlocks {
             itemCapacity = 10;
 
             acceptedLiquids.addAll(MeldLiquids.aspect, MeldLiquids.boundAspect);
-            acceptedItems.addAll(MeldItems.shadesteel, MeldItems.elnarDust, MeldItems.debris, MeldItems.annealedSilver);
+            acceptedItems.addAll(MeldItems.shadesteel, MeldItems.elnarDust, MeldItems.debris, MeldItems.silver, MeldItems.annealedSilver);
             dumpedItems.addAll(MeldItems.aspectPipe);
 
             ItemRecipe
-                    aspectPipe1 = new ItemRecipe(with(MeldItems.shadesteel, 2, MeldItems.elnarDust, 2), with(MeldItems.aspectPipe, 4)),
-                    aspectPipe2 = new ItemRecipe(with(MeldItems.debris, 1, MeldItems.annealedSilver, 2), with(MeldItems.aspectPipe, 4));
+                    aspectPipe1 = new ItemRecipe(with(MeldItems.shadesteel, 2, MeldItems.elnarDust, 4), with(MeldItems.aspectPipe, 2)),
+                    aspectPipe2 = new ItemRecipe(with(MeldItems.debris, 1, MeldItems.annealedSilver, 2), with(MeldItems.aspectPipe, 2)),
+                    aspectPipe3 = new ItemRecipe(with(MeldItems.debris, 1, MeldItems.silver, 2), with(MeldItems.aspectPipe, 2));;
 
             float produceTime = 30;
 
@@ -1337,28 +1445,37 @@ public class MeldBlocks {
                     new GateModule(
                             ModOUT.ONE, new GateModule.RecipeCondition(aspectPipe2)
                     ),
+                    new GateModule(
+                            ModOUT.TWO, new GateModule.RecipeCondition(aspectPipe3)
+                    ),
                     new LambdaModule(){{
                         //Set every ping after the first one found as 1 to zero
                         updater = b -> {
                             int a = 0;
-                            for(int i = 0; i < 2; i++){
+                            for(int i = 0; i < 3; i++){
                                 b.setPin(i, Math.max(b.getPin(i) - a, 0));
                                 a = (int)Math.max(a, b.getPin(i));
                             }
-                            b.setPin(ModOUT.TWO, a);
+                            b.setPin(ModOUT.THREE, a);
                         };
                     }},
-                    new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.aspect, outletRate * 2), ModIN.TWO, ModOUT.THREE),
+                    new ConsumeLiquidModule(LiquidStack.with(MeldLiquids.aspect, outletRate * 2), ModIN.THREE, ModOUT.FOUR),
                     new RecipeCraftingModule(){{
                         recipe = aspectPipe1;
-                        efficiencyPins = new int[]{ModIN.THREE, ModIN.ZERO};
+                        efficiencyPins = new int[]{ModIN.FOUR, ModIN.ZERO};
                         progressPin = ModOUT.FOUR;
                         craftTime = produceTime;
                     }},
                     new RecipeCraftingModule(){{
                         recipe = aspectPipe2;
-                        efficiencyPins = new int[]{ModIN.THREE, ModIN.ONE};
+                        efficiencyPins = new int[]{ModIN.FOUR, ModIN.ONE};
                         progressPin = ModOUT.FIVE;
+                        craftTime = produceTime;
+                    }},
+                    new RecipeCraftingModule(){{
+                        recipe = aspectPipe3;
+                        efficiencyPins = new int[]{ModIN.FOUR, ModIN.TWO};
+                        progressPin = ModOUT.SIX;
                         craftTime = produceTime;
                     }}
             );
@@ -1370,7 +1487,9 @@ public class MeldBlocks {
             health = 2500;
 
             consume(new ConsumeLiquid(MeldLiquids.aspect, outletRate * 12));
-            plans.addAll(new UnitPlan(MeldUnits.shark, 60 * 5, with(MeldItems.silver, 80, MeldItems.carbolith, 60)));
+            plans.addAll(
+                    new UnitPlan(MeldUnits.shark, 60 * 5, with(MeldItems.silver, 80, MeldItems.carbolith, 60))
+            );
         }};
 
         sonarSpire = new SonarSpire("sonar-spire"){{

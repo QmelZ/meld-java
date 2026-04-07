@@ -14,6 +14,8 @@ import arc.util.Log;
 import arc.util.Tmp;
 import meld.*;
 import meld.entities.bullet.TransitionBulletType;
+import meld.entities.unit.abilities.BezerkAbility;
+import meld.entities.unit.weapons.template.PointagoWeapon;
 import meld.graphics.part.*;
 import meld.entities.unit.*;
 import meld.entities.unit.type.*;
@@ -25,7 +27,9 @@ import meld.entities.unit.weapons.DeathWeapon;
 import meld.entities.unit.weapons.ShadowVisualWeapon;
 import mindustry.Vars;
 import mindustry.ai.types.HugAI;
+import mindustry.content.Blocks;
 import mindustry.content.Fx;
+import mindustry.content.Items;
 import mindustry.content.StatusEffects;
 import mindustry.entities.Effect;
 import mindustry.entities.abilities.RegenAbility;
@@ -43,6 +47,7 @@ import mindustry.type.UnitType;
 import mindustry.type.Weapon;
 import mindustry.type.weapons.RepairBeamWeapon;
 import arc.struct.ObjectMap.Entry;
+import mindustry.world.blocks.defense.turrets.ItemTurret;
 
 public class MeldUnits {
 
@@ -96,7 +101,7 @@ public class MeldUnits {
 
     //enemy units
     cannonOverseer, blob,
-    afraig, craig, braig, globkin,
+    afraig, craig, braig, pointago, globkin,
     jilla, kathid;
 
     public static void load(){
@@ -255,7 +260,7 @@ public class MeldUnits {
         }};
 
         bulbhead = new UnitType("bulbhead"){{
-            float IR = 140;
+            float IR = 120;
 
             health = 290;
 
@@ -263,7 +268,7 @@ public class MeldUnits {
             drag = 0.15f;
             accel = 0.8f;
 
-            rotateSpeed = 7;
+            rotateSpeed = 9;
             trailLength = 18;
             trailScl = 1.2f;
 
@@ -934,9 +939,7 @@ public class MeldUnits {
             constructor = LegsUnit::create;
         }};
 
-        craig = new UnitType("craig"){{
-            outlineColor = Color.clear;
-
+        craig = new MeldUnitType("craig"){{
             speed = 0.9f;
             health = 320;
             drag = 0.12f;
@@ -987,11 +990,11 @@ public class MeldUnits {
             constructor = LegsUnit::create;
         }};
 
-        braig = new UnitType("braig"){{
+        braig = new MeldUnitType("braig"){{
             outlineColor = Color.clear;
             speed = 0.8f;
 
-            health = 950;
+            health = 1200;
             drag = 0.12f;
             accel = 0.2f;
 
@@ -1112,6 +1115,62 @@ public class MeldUnits {
 
             immunities.addAll(MeldStatusEffects.aspectBurn);
 
+            constructor = LegsUnit::create;
+        }};
+
+        pointago = new MeldUnitType("pointago"){{
+            speed = 0.8f;
+
+            health = 1600;
+
+            drag = 0.12f;
+            accel = 0.2f;
+            range = 40;
+
+            hitSize = 26;
+            rotateSpeed = 6;
+            faceTarget = true;
+
+            drawCell = false;
+
+            legCount = 6;
+            legLength = 24;
+
+            legBaseOffset = 12;
+
+            lockLegBase = true;
+            legContinuousMove = true;
+
+            legGroupSize = 2;
+            legExtension = 4;
+            legLengthScl = 0.9f;
+            legPairOffset = 5;
+
+            legMoveSpace = 3;
+            allowLegStep = true;
+            legPhysicsLayer = false;
+
+            weapons.addAll(
+                    new PointagoWeapon(30f/4, 2){{
+                        rotateSpeed = 0.5f;
+                        rotationLimit = 5;
+                        shootCone = 180;
+                    }},
+                    new PointagoWeapon(-36f/4, -11f/4){{
+                        rotateSpeed = 0.5f;
+                        rotationLimit = 5;
+                        shootCone = 180;
+                    }}
+            );
+
+            abilities.addAll(
+                    new BezerkAbility(){{
+                        deathBomb = MeldBullets.pulsarBlast;
+                        bezerkTime = 30;
+                    }}
+            );
+
+            immunities.addAll(MeldStatusEffects.aspectBurn);
             constructor = LegsUnit::create;
         }};
 
@@ -1242,6 +1301,7 @@ public class MeldUnits {
                     }}
             );
 
+            immunities.addAll(MeldStatusEffects.lacerated);
             constructor = LegsUnit::create;
         }};
 
@@ -1302,8 +1362,7 @@ public class MeldUnits {
             constructor = CrawlUnit::create;
         }};
 
-        kathid = new UnitType("kathid"){{
-            outlineColor = Color.clear;
+        kathid = new MeldUnitType("kathid"){{
             shadowElevation = 0.1f;
             speed = 0.7f;
 
@@ -1374,7 +1433,7 @@ public class MeldUnits {
                         }};
                     }}
             );
-            immunities.addAll(MeldStatusEffects.aspectBurn);
+            immunities.addAll(MeldStatusEffects.lacerated);
 
             constructor = LegsUnit::create;
         }};

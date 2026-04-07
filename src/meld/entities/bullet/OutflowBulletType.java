@@ -23,14 +23,9 @@ public class OutflowBulletType extends BasicBulletType {
     }
 
     @Override
-    public void despawned(Bullet b) {
-        super.despawned(b);
+    public void createSplashDamage(Bullet b, float x, float y) {
+        super.createSplashDamage(b, x, y);
         outflow(b, b.x, b.y);
-    }
-
-    @Override
-    public void hit(Bullet b) {
-        super.hit(b);
     }
 
     @Override

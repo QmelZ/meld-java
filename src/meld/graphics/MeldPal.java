@@ -16,5 +16,7 @@ public class MeldPal {
     shockwaveGray = Color.valueOf("7f7f7f"),
     sparkOrange = Color.valueOf("f6e096"),
     resoShardFront = Color.valueOf("a3efba"),
-    resoShardBack = Color.valueOf("40a547");
+    resoShardBack = Color.valueOf("40a547"),
+    glassMallowsFront = Color.valueOf("ede0d4"),
+    glassMallowsBack = Color.valueOf("cd9d70");
 }

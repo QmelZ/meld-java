@@ -22,7 +22,6 @@ public class DeathBirthAbility extends SpawnDeathAbility {
                 u.apply(MeldStatusEffects.newborn, 60);
             }
         }
-
     }
 }
 

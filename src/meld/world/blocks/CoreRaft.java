@@ -41,7 +41,7 @@ public class CoreRaft extends CoreBlock {
 
     public CoreRaft(String name) {
         super(name);
-        fogRadius = 50;
+        fogRadius = 40;
         Events.on(EventType.WorldLoadEvent.class, e -> {
             rafts.clear();
             Team.sharded.cores().each(c -> {
