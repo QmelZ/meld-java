@@ -32,12 +32,13 @@ public class MovementAnchor extends Block {
 
     public MovementAnchor(String name) {
         super(name);
+        solid = true;
         update = true;
         reload = 90;
         status = MeldStatusEffects.anchored;
         statusDuration = 240;
         targets = 2;
-        this.timerPulse = this.timers++;
+        timerPulse = timers++;
     }
 
 

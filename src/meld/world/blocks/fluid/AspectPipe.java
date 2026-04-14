@@ -31,7 +31,7 @@ public class AspectPipe extends Conduit {
 
     @Override
     public boolean blends(Tile tile, int rotation, int otherx, int othery, int otherrot, Block otherblock) {
-        return super.blends(tile, rotation, otherx, othery, otherrot, otherblock) || (otherblock.hasLiquids && !(otherblock instanceof Conduit || otherblock instanceof LiquidRouter) && outletMapping.keys().toSeq().find(l -> otherblock.consumesLiquid(l)) != null);
+        return super.blends(tile, rotation, otherx, othery, otherrot, otherblock) || (otherblock.hasLiquids && !(otherblock instanceof Conduit || otherblock instanceof LiquidRouter) && outletMapping.values().toSeq().find(l -> otherblock.consumesLiquid(l)) != null);
     }
 
     public class AspectPipeBuild extends ConduitBuild{

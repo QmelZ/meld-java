@@ -20,8 +20,9 @@ public class SolidSpeedAbility extends Ability {
         float target = 1;
         if(unit.tileOn() != null && unit.tileOn().floor().isLiquid) {
             target = 0;
-            unit.speedMultiplier *= Mathf.lerp(1, speedMultiplier, warmup);
         }
         warmup = Mathf.lerpDelta(warmup, target, warmupSpeed);
+
+        unit.speedMultiplier *= Mathf.lerp(1, speedMultiplier, warmup);
     }
 }

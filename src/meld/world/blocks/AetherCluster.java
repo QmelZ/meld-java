@@ -1,6 +1,7 @@
 package meld.world.blocks;
 
 import arc.graphics.g2d.TextureRegion;
+import arc.math.Mathf;
 import arc.math.geom.Point2;
 import arc.scene.ui.layout.Table;
 import arc.util.Time;
@@ -32,7 +33,7 @@ public class AetherCluster extends LiquidBlock {
         @Override
         public void updateTile() {
             super.updateTile();
-            liquids.add(outputLiquid.liquid, outputLiquid.amount * Time.delta);
+            liquids.set(outputLiquid.liquid, Mathf.clamp(liquids.get(outputLiquid.liquid) + outputLiquid.amount * Time.delta, 0, liquidCapacity));
             if(timer.get(liquidTimer, 5)){
                 updateProximity();
                 dumpLiquid(outputLiquid.liquid);

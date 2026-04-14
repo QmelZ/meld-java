@@ -9,6 +9,8 @@ import arc.graphics.g2d.Lines;
 import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
+import arc.math.geom.Geometry;
+import arc.math.geom.Point2;
 import arc.math.geom.Position;
 import arc.util.*;
 import meld.content.MeldUnits;
@@ -24,10 +26,7 @@ import mindustry.entities.units.BuildPlan;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.game.Teams;
-import mindustry.gen.Building;
-import mindustry.gen.Call;
-import mindustry.gen.Sounds;
-import mindustry.gen.UnitWaterMove;
+import mindustry.gen.*;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
@@ -44,6 +43,19 @@ public class BulbheadEntity extends UnitWaterMove {
 
     //Actually counts upwards... kinda counter intuitively named
     public float corelinkGrace = 0;
+
+
+    @Override
+    public EntityCollisions.SolidPred solidity() {
+        return (x, y) -> {
+            Tile tile = Vars.world.tile(x, y);
+            if(tile == null) return true;
+
+            if(tile.synthetic() || !tile.solid()) return false;
+
+            return !(tile.floor().isLiquid);
+        };
+    }
 
     //skip all the logic involved and just give rotation
     @Override
@@ -246,6 +258,8 @@ public class BulbheadEntity extends UnitWaterMove {
 
     public void draw(){
         super.draw();
+        float actualElevation = elevation;
+        elevation /= 2;
 
         //Draww.drawChain(chain, x, y, Core.input.mouseWorldX(), Core.input.mouseWorldY(), 0);
 
@@ -268,6 +282,8 @@ public class BulbheadEntity extends UnitWaterMove {
             Draww.drawChainAlpha(MeldRegions.chain, nearbyRaft.x, nearbyRaft.y, x, y, 1 - 0.5f * Interp.pow5.apply(1-stretch), 0.5f + 0.5f * stretch, 0, f -> Interp.slope.apply((f + dist)/(type.fogRadius * Vars.tilesize) % 1 + Time.time/60));
             Draw.blend(Blending.normal);
         }
+
+        elevation = actualElevation;
     }
 
     //Attempt to draw the build beam from the unit itself. If that fails, draw it to the core instead, then draw the build beam from the core

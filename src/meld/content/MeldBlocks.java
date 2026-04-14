@@ -1012,7 +1012,7 @@ public class MeldBlocks {
             unitCapModifier = 6;
 
             unitType = MeldUnits.bulbhead;
-            solid = false;
+            solid = true;
         }};
 
         aetherAccumulator = new AttributeCrafter("aether-accumulator"){{
@@ -1548,7 +1548,7 @@ public class MeldBlocks {
 
             speed = 1f;
 
-            solid = false;
+            solid = true;
         }};
 
         chuteJunction = new DuctJunction("chute-crossing"){{

@@ -291,6 +291,11 @@ public class MeldUnits {
             mineRange = IR;
             fogRadius = IR/ Vars.tilesize;
 
+            canBoost = true;
+            boostMultiplier = 0.5f;
+            shadowElevation = 0;
+            shadowElevationScl = 0.5f;
+
             weapons.add(
                     new RepairBeamWeapon("meld-bulbhead-healer"){{
                         mirror = false;
@@ -447,6 +452,12 @@ public class MeldUnits {
                     MeldStatusEffects.rally,
                     MeldStatusEffects.drenched
             );
+
+            float ex = 34/4f, ey = 35/4f;
+            engines.add(
+                    new MeldUnitType.ActivationEngine(ex, -ey, 3.2f, 315, 0.5f, 1, 0.5f, 1.5f),
+                    new MeldUnitType.ActivationEngine(-ex, -ey, 3.2f, 225, 0.5f, 1, 0.5f, 1.5f)
+            );
         }};
 
         shark = new UnitType("shark"){{
@@ -479,12 +490,12 @@ public class MeldUnits {
                         rotate = true;
                         x = 0;
                         y = -2;
-                        reload = 90;
+                        reload = 180;
                         rotateSpeed = 3.5f;
                         recoil = 1.25f;
                         inaccuracy = 15;
                         velocityRnd = 0.05f;
-                        shoot.shots = 3;
+                        shoot.shots = 5;
                         shoot.shotDelay = 5;
 
                         bullet = new MissileBulletType(){{
@@ -560,7 +571,7 @@ public class MeldUnits {
                         shadowElevation = 0.1f;
                         shadowElevationTo = 0.2f;
                         layerOffset = -0.001f;
-                        reload = 15;
+                        reload = 30;
                         parts.addAll(
                             new AdjustableHoverPart(){{
                                 x = 4;
@@ -602,8 +613,8 @@ public class MeldUnits {
             //actually im gona make sharks faster on fluids cause like... fluids
             abilities.addAll(
                     new SolidSpeedAbility(){{
-                        warmupSpeed = 2/60f;
-                        speedMultiplier = 1/1.5f;
+                        warmupSpeed = 0.05f;
+                        speedMultiplier = 0.75f;
                     }},
                     new SlipstreamHullAbility()
             );

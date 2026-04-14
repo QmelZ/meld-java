@@ -55,7 +55,7 @@ public class MeldStatusEffects {
             }
             {
             speedMultiplier = 1.25f;
-            reloadMultiplier = 3;
+            reloadMultiplier = 2;
         }};
 
         rush = new StatusEffect("rush"){
