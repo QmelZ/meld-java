@@ -2,6 +2,7 @@ package meld;
 
 import arc.*;
 import arc.graphics.Color;
+import arc.graphics.Colors;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.struct.IntSeq;
@@ -10,15 +11,26 @@ import arc.util.Time;
 import arc.util.Tmp;
 import meld.content.*;
 import meld.core.*;
+import meld.entities.unit.abilities.BezerkAbility;
+import meld.fluid.AspectGroup;
+import meld.graphics.MeldRegions;
+import meld.meta.MeldStatUnit;
 import mindustry.Vars;
 import mindustry.content.Blocks;
+import mindustry.content.Bullets;
 import mindustry.content.Fx;
+import mindustry.content.UnitTypes;
+import mindustry.ctype.UnlockableContent;
+import mindustry.game.EventType;
 import mindustry.game.EventType.*;
 import mindustry.mod.*;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.Floor;
+import mindustry.world.meta.Stat;
+import mindustry.world.meta.StatUnit;
 import rhino.ImporterTopLevel;
 import rhino.NativeJavaPackage;
+
 
 public class Meld extends Mod{
     public static final String name = "meld";
@@ -26,8 +38,11 @@ public class Meld extends Mod{
     public static NativeJavaPackage p = null;
 
     public static Melting melting;
-    
+
     public Meld(){
+        Events.on(EventType.ClientLoadEvent.class, e -> {
+            MeldRegions.load();
+        });
     }
 
     public static String prefix(String in){
@@ -69,7 +84,8 @@ public class Meld extends Mod{
         Seq<String> packages = Seq.with(
                 "meld",
                 "meld.content",
-                "meld.world"
+                "meld.world",
+                "meld.fluid"
         );
 
         packages.each(name -> {
@@ -91,11 +107,22 @@ public class Meld extends Mod{
         MeldLiquids.load();
         MeldBlocks.load();
         MeldEnvironment.load();
+
+        //Just loads localised names
+        AspectGroup.loadAll();
+
+        Vars.content.items().each(c -> {
+                c.stats.add(Stat.buildCost, c.cost, MeldStatUnit.ticks);
+        });
         
         Vars.content.blocks().each(b -> {
             if(b.minfo.mod != null && b.minfo.mod.name.equals("meld")){
                 b.deconstructDropAllLiquid = true;
             }
+        });
+
+        Vars.content.liquids().each(l -> {
+            Colors.put(l.name, l.color);
         });
     }
 }

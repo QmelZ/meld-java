@@ -8,6 +8,8 @@ import mindustry.type.StatusEffect;
 
 public class MeldStatusEffects {
     public static StatusEffect amplified, rally, anchored, aspectBurn, sentry, spurting, newborn, interference, drenched, stunned;
+    public static StatusEffect lacerated, impaled;
+    public static StatusEffect rush;
 
 
     public static void load(){
@@ -54,46 +56,54 @@ public class MeldStatusEffects {
             {
             speedMultiplier = 1.25f;
             reloadMultiplier = 2;
-
         }};
 
-        anchored = new StatusEffect("anchored"){
-
+        rush = new StatusEffect("rush"){
             @Override
             public void update(Unit unit, StatusEntry entry) {
 
                 unit.speedMultiplier /= speedMultiplier;
-                //Start the falloff at 150 ticks remaining
+                //Start the falloff at 180 ticks remaining
                 unit.speedMultiplier *= Mathf.lerp(
                         1, speedMultiplier,
 
-                        Interp.pow2.apply(
-                                Mathf.clamp(Math.min(entry.time, 150)/(150))
+                        Interp.pow3.apply(
+                                Mathf.clamp(Math.min(entry.time, 180)/(180))
                         )
                 );
             }
             {
-
-                speedMultiplier = 0.3f;
-                dragMultiplier = 3;
+                damage = -1;
+                healthMultiplier = 2;
+                speedMultiplier = 2;
+                disarm = true;
             }};
 
-        aspectBurn = new StatusEffect("aspect-burn"){
-            @Override
-            public void update(Unit unit, StatusEntry entry) {
-                super.update(unit, entry);
-                if(unit.armor > 0) unit.damageContinuousPierce(unit.armor/60);
-            }
-            {
-                damage = 0.1f;
-                healthMultiplier = 0.5f;
-            }
-        };
+        anchored = new StatusEffect("anchored"){
+
+        @Override
+        public void update(Unit unit, StatusEntry entry) {
+
+            unit.speedMultiplier /= speedMultiplier;
+            //Start the falloff at 150 ticks remaining
+            unit.speedMultiplier *= Mathf.lerp(
+                    1, speedMultiplier,
+
+                    Interp.pow2.apply(
+                            Mathf.clamp(Math.min(entry.time, 150)/(150))
+                    )
+            );
+        }
+        {
+
+            speedMultiplier = 0.3f;
+            dragMultiplier = 3;
+        }};
 
         sentry = new StatusEffect("sentry"){{
             damage = 0.1f;
             reloadMultiplier = 2;
-            speedMultiplier = 0.3f;
+            speedMultiplier = 0.15f;
         }};
 
         spurting = new StatusEffect("spurting"){
@@ -110,6 +120,7 @@ public class MeldStatusEffects {
                         )
                 );
             }{
+            damage = 0.2f;
             speedMultiplier = 0.01f;
             dragMultiplier = 0.3f;
             disarm = true;
@@ -165,6 +176,34 @@ public class MeldStatusEffects {
 
                 speedMultiplier = 0.5f;
 
+        }};
+
+        //Only affects unarmored
+        lacerated = new StatusEffect("lacerated"){{
+            damage = -0.2f;
+            speedMultiplier = 0.45f;
+            reloadMultiplier = 0.5f;
+            buildSpeedMultiplier = 0.5f;
+        }};
+
+
+        //Only affects armored
+        aspectBurn = new StatusEffect("aspect-burn"){
+            @Override
+            public void update(Unit unit, StatusEntry entry) {
+                super.update(unit, entry);
+                if(unit.armor > 0) unit.damageContinuousPierce(unit.armor/60);
+            }
+            {
+                damage = 0.1f;
+                healthMultiplier = 0.5f;
+            }
+        };
+
+        impaled = new StatusEffect("impaled"){{
+            damage = 0.2f;
+            speedMultiplier = 0.45f;
+            buildSpeedMultiplier = 0.5f;
         }};
     }
 }

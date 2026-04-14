@@ -1,5 +1,6 @@
 package meld.content;
 
+import arc.func.Prov;
 import arc.graphics.Blending;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
@@ -8,21 +9,25 @@ import arc.graphics.g2d.Lines;
 import arc.math.Angles;
 import arc.math.Interp;
 import arc.math.Mathf;
+import arc.struct.ObjectIntMap;
+import arc.util.Log;
 import arc.util.Tmp;
 import meld.*;
 import meld.entities.bullet.TransitionBulletType;
+import meld.entities.unit.abilities.*;
+import meld.entities.unit.weapons.template.BraigWeapon;
+import meld.entities.unit.weapons.template.PointagoWeapon;
 import meld.graphics.part.*;
 import meld.entities.unit.*;
 import meld.entities.unit.type.*;
 import meld.graphics.*;
-import meld.entities.unit.abilities.DeathBirthAbility;
-import meld.entities.unit.abilities.SlipstreamHullAbility;
-import meld.entities.unit.abilities.SolidSpeedAbility;
 import meld.entities.unit.weapons.DeathWeapon;
 import meld.entities.unit.weapons.ShadowVisualWeapon;
 import mindustry.Vars;
 import mindustry.ai.types.HugAI;
+import mindustry.content.Blocks;
 import mindustry.content.Fx;
+import mindustry.content.Items;
 import mindustry.content.StatusEffects;
 import mindustry.entities.Effect;
 import mindustry.entities.abilities.RegenAbility;
@@ -32,15 +37,62 @@ import mindustry.entities.effect.MultiEffect;
 import mindustry.entities.effect.ParticleEffect;
 import mindustry.entities.effect.WaveEffect;
 import mindustry.entities.part.*;
+import mindustry.entities.pattern.ShootBarrel;
 import mindustry.entities.pattern.ShootSpread;
 import mindustry.gen.*;
 import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
+import mindustry.type.StatusEffect;
 import mindustry.type.UnitType;
 import mindustry.type.Weapon;
 import mindustry.type.weapons.RepairBeamWeapon;
+import arc.struct.ObjectMap.Entry;
+import mindustry.world.blocks.defense.turrets.ItemTurret;
 
 public class MeldUnits {
+
+    private static Entry<Class<? extends Entityc>, Prov<? extends Entityc>>[] types = new Entry[]{
+            prov(BulbheadEntity.class, BulbheadEntity::new)
+    };
+
+    private static ObjectIntMap<Class<? extends Entityc>> idMap = new ObjectIntMap<>();
+
+    /**
+     * Internal function to flatmap {@code Class -> Prov} into an {@link Entry}.
+     * @author GlennFolker
+     */
+
+    private static <T extends Entityc> Entry<Class<T>, Prov<T>> prov(Class<T> type, Prov<T> prov){
+        Entry<Class<T>, Prov<T>> entry = new Entry<>();
+        entry.key = type;
+        entry.value = prov;
+        return entry;
+    }
+
+    /**
+     * Setups all entity IDs and maps them into {@link EntityMapping}.
+     * Find all free ids to map to, then put the Entry(s) from types into the idMap. Starts searching after the last known index of a vanilla Entry
+     */
+
+    private static void setupID(){
+        int start = 33;
+        int[] free = new int[types.length];
+        for (int i = start, j = 0; i < EntityMapping.idMap.length; i++) {
+            if(EntityMapping.idMap[i] == null) free[j++] = i;
+            if(j > free.length - 1) break;
+        }
+
+        Log.info("setting up map");
+        for (int i = 0; i < free.length; i++) {
+            idMap.put(types[i].key, free[i]);
+            EntityMapping.idMap[free[i]] = types[i].value;
+        }
+    }
+
+    public static <T extends Entityc> int classID(Class<T> type){
+        return idMap.get(type, -1);
+    }
+
     //player units
     public static UnitType
     bulbhead, shark,
@@ -49,14 +101,17 @@ public class MeldUnits {
 
     //enemy units
     cannonOverseer, blob,
-    afraig, craig, braig, globkin,
-    jilla, kathid;
+    afraig, craig, braig, pointago, globkin,
+    jilla, billa, scorcher, kathid;
 
     public static void load(){
+        setupID();
+
         bulbheadOverseer = new UnitType("bulbhead-overseer"){{
             float IR = 80;
 
             health = 240;
+            armor = -40;
             lifetime = 360;
             speed = 0;
             flying = true;
@@ -214,7 +269,7 @@ public class MeldUnits {
             drag = 0.15f;
             accel = 0.8f;
 
-            rotateSpeed = 7;
+            rotateSpeed = 9;
             trailLength = 18;
             trailScl = 1.2f;
 
@@ -235,6 +290,11 @@ public class MeldUnits {
             buildRange = IR;
             mineRange = IR;
             fogRadius = IR/ Vars.tilesize;
+
+            canBoost = true;
+            boostMultiplier = 0.5f;
+            shadowElevation = 0;
+            shadowElevationScl = 0.5f;
 
             weapons.add(
                     new RepairBeamWeapon("meld-bulbhead-healer"){{
@@ -376,7 +436,7 @@ public class MeldUnits {
                         color = Pal.accent;
                     }}
             );
-            constructor = UnitEdgeWaterMove::new;
+            constructor = BulbheadEntity::new;
 
             abilities.addAll(
                     new RegenAbility(){{
@@ -391,6 +451,12 @@ public class MeldUnits {
             immunities.addAll(
                     MeldStatusEffects.rally,
                     MeldStatusEffects.drenched
+            );
+
+            float ex = 34/4f, ey = 35/4f;
+            engines.add(
+                    new MeldUnitType.ActivationEngine(ex, -ey, 3.2f, 315, 0.5f, 1, 0.5f, 1.5f),
+                    new MeldUnitType.ActivationEngine(-ex, -ey, 3.2f, 225, 0.5f, 1, 0.5f, 1.5f)
             );
         }};
 
@@ -424,12 +490,12 @@ public class MeldUnits {
                         rotate = true;
                         x = 0;
                         y = -2;
-                        reload = 90;
+                        reload = 180;
                         rotateSpeed = 3.5f;
                         recoil = 1.25f;
                         inaccuracy = 15;
                         velocityRnd = 0.05f;
-                        shoot.shots = 3;
+                        shoot.shots = 5;
                         shoot.shotDelay = 5;
 
                         bullet = new MissileBulletType(){{
@@ -505,7 +571,7 @@ public class MeldUnits {
                         shadowElevation = 0.1f;
                         shadowElevationTo = 0.2f;
                         layerOffset = -0.001f;
-                        reload = 15;
+                        reload = 30;
                         parts.addAll(
                             new AdjustableHoverPart(){{
                                 x = 4;
@@ -547,8 +613,8 @@ public class MeldUnits {
             //actually im gona make sharks faster on fluids cause like... fluids
             abilities.addAll(
                     new SolidSpeedAbility(){{
-                        warmupSpeed = 2/60f;
-                        speedMultiplier = 1/1.5f;
+                        warmupSpeed = 0.05f;
+                        speedMultiplier = 0.75f;
                     }},
                     new SlipstreamHullAbility()
             );
@@ -885,9 +951,7 @@ public class MeldUnits {
             constructor = LegsUnit::create;
         }};
 
-        craig = new UnitType("craig"){{
-            outlineColor = Color.clear;
-
+        craig = new MeldUnitType("craig"){{
             speed = 0.9f;
             health = 320;
             drag = 0.12f;
@@ -938,11 +1002,11 @@ public class MeldUnits {
             constructor = LegsUnit::create;
         }};
 
-        braig = new UnitType("braig"){{
+        braig = new MeldUnitType("braig"){{
             outlineColor = Color.clear;
             speed = 0.8f;
 
-            health = 950;
+            health = 1200;
             drag = 0.12f;
             accel = 0.2f;
 
@@ -967,7 +1031,7 @@ public class MeldUnits {
 
             weapons.addAll(
                     craigWeapon(-6, 2),
-                    braigWeapon(6, -3),
+                    new BraigWeapon(6, -3),
                     new DeathWeapon(){{
                         bullet = new ExplosionBulletType(250, 35){{
                             shootEffect = new MultiEffect(
@@ -1066,6 +1130,62 @@ public class MeldUnits {
             constructor = LegsUnit::create;
         }};
 
+        pointago = new MeldUnitType("pointago"){{
+            speed = 0.8f;
+
+            health = 1600;
+
+            drag = 0.12f;
+            accel = 0.2f;
+            range = 40;
+
+            hitSize = 26;
+            rotateSpeed = 6;
+            faceTarget = true;
+
+            drawCell = false;
+
+            legCount = 6;
+            legLength = 24;
+
+            legBaseOffset = 12;
+
+            lockLegBase = true;
+            legContinuousMove = true;
+
+            legGroupSize = 2;
+            legExtension = 4;
+            legLengthScl = 0.9f;
+            legPairOffset = 5;
+
+            legMoveSpace = 3;
+            allowLegStep = true;
+            legPhysicsLayer = false;
+
+            weapons.addAll(
+                    new PointagoWeapon(30f/4, 2){{
+                        rotateSpeed = 0.5f;
+                        rotationLimit = 5;
+                        shootCone = 180;
+                    }},
+                    new PointagoWeapon(-36f/4, -11f/4){{
+                        rotateSpeed = 0.5f;
+                        rotationLimit = 5;
+                        shootCone = 180;
+                    }}
+            );
+
+            abilities.addAll(
+                    new BezerkAbility(){{
+                        deathBomb = MeldBullets.pulsarBlast;
+                        bezerkTime = 30;
+                    }}
+            );
+
+            immunities.addAll(MeldStatusEffects.aspectBurn);
+            constructor = LegsUnit::create;
+        }};
+
         globkin = new UnitType("globkin"){{
             outlineColor = Color.clear;
             speed = 0.7f;
@@ -1093,10 +1213,15 @@ public class MeldUnits {
             legContinuousMove = true;
             legPhysicsLayer = false;
 
-            Weapon backMount = braigWeapon(0.25f, -11);
-            backMount.shootStatus = StatusEffects.none;
             weapons.add(
-                    backMount,
+                    new BraigWeapon(0.25f, -11){{
+                        shootStatus = StatusEffects.none;
+                        reload /= 2f;
+                        controllable = aiControllable = false;
+                        autoTarget = true;
+                        targetSwitchInterval = 20;
+                        targetInterval = 15;
+                    }},
                     new Weapon(""){{
                         x = 16.25f;
                         y = 4.25f;
@@ -1128,6 +1253,36 @@ public class MeldUnits {
                             fragRandomSpread = 45;
                             recoil = 4.5f;
                             rangeOverride = 160;
+                            spawnBullets.addAll(
+                                    new TransitionBulletType(){{
+                                        fragRandomSpread = 45;
+                                        recoil = 4.5f;
+                                        fragBullets = 12;
+
+                                        fragBullet = new BasicBulletType(8.5f, 1.5f, "meld-clump"){{
+                                            width = 5;
+                                            height = 9;
+                                            shrinkX = shrinkY = 1;
+
+                                            splashDamage = 12;
+                                            splashDamageRadius = 25;
+
+                                            status = MeldStatusEffects.stunned;
+                                            statusDuration = 35;
+
+                                            pierce = true;
+                                            pierceCap = 2;
+                                            speed = 8.5f;
+                                            drag = 0.01f;
+
+                                            lifetime = 45;
+
+                                            knockback = 5.5f;
+
+                                            keepVelocity = false;
+                                        }};
+                                    }}
+                            );
 
                             fragBullet = new ArtilleryBulletType(){{
                                 width = 16;
@@ -1193,6 +1348,7 @@ public class MeldUnits {
                     }}
             );
 
+            immunities.addAll(MeldStatusEffects.lacerated);
             constructor = LegsUnit::create;
         }};
 
@@ -1253,8 +1409,216 @@ public class MeldUnits {
             constructor = CrawlUnit::create;
         }};
 
-        kathid = new UnitType("kathid"){{
-            outlineColor = Color.clear;
+        billa = new MeldUnitType("billa"){{
+            health = 450;
+
+            armor = 120;
+            drag = 0.25f;
+            accel = 0.35f;
+            speed = 1.5f;
+
+            hitSize = 32;
+            rotateSpeed = 8;
+            faceTarget = true;
+
+            hovering = true;
+
+            legCount = 6;
+            legLength = 60;
+            legMaxLength = 1;
+            legGroupSize = 2;
+            legSpeed = 1;
+            legForwardScl = 3;
+            legBaseOffset = 8;
+            drawCell = false;
+            legPhysicsLayer = true;
+
+            deathExplosionEffect = Fx.none;
+
+            weapons.add(
+                    new Weapon(Meld.prefix("billa-crystals")){{
+                        x = y = 0;
+                        mirror = alternate = rotate = false;
+                        reload = 14;
+
+                        shootCone = 180;
+                        recoil = 0;
+
+                        shootY = 12.5f;
+                        continuous = alwaysContinuous = true;
+                        shootSound = Sounds.shootSublimate;
+
+                        parts.addAll(
+                                new RegionPart("-glow"){{
+                                    outline = false;
+                                    progress = PartProgress.warmup;
+                                    color = Color.clear;
+                                    colorTo = Color.white;
+                                    blending = Blending.additive;
+                                }}
+                        );
+
+                        shootStatus = MeldStatusEffects.sentry;
+                        shootStatusDuration = 4;
+
+                        bullet = new ContinuousFlameBulletType(){{
+                            lifetime = 85;
+                            damage = 13;
+                            length = 75;
+                            width = 1.5f;
+                            knockback = 3;
+                            pierceCap = 3;
+                            flareLength = 0;
+                            rangeOverride = 55;
+                            recoil = 0.01f;
+                            hitUnder = true;
+
+                            colors = new Color[]{
+                                    Color.valueOf("f9e1f343"),
+                                    Color.valueOf("ee5de9a9"),
+                                    Color.valueOf("ef85e3e3"),
+                                    Color.valueOf("d22fee"),
+                                    Color.white
+                            };
+                        }};
+                    }},
+                    new Weapon(){{
+                        alternate = rotate = false;
+                        mirror = true;
+                        reload = 14;
+                        x = 10;
+                        y = 3.75f;
+                        baseRotation = -45;
+
+                        shootCone = 180;
+                        recoil = 0;
+
+                        shootY = 0;
+                        continuous = alwaysContinuous = true;
+                        shootSound = Sounds.shootSublimate;
+                        parts.addAll(
+                                new RegionPart("-glow"){{
+                                    outline = false;
+                                    progress = PartProgress.warmup;
+                                    color = Color.clear;
+                                    colorTo = Color.white;
+                                    blending = Blending.additive;
+                                }}
+                        );
+
+                        shootStatus = MeldStatusEffects.sentry;
+                        shootStatusDuration = 4;
+
+                        bullet = new ContinuousFlameBulletType(){{
+                            lifetime = 85;
+                            damage = 10;
+                            length = 75;
+                            width = 0.5f;
+                            knockback = 3;
+                            pierceCap = 3;
+                            flareLength = 0;
+                            rangeOverride = 55;
+                            recoil = 0.01f;
+                            hitUnder = true;
+
+                            colors = new Color[]{
+                                    Color.valueOf("f9e1f343"),
+                                    Color.valueOf("ee5de9a9"),
+                                    Color.valueOf("ef85e3e3"),
+                                    Color.valueOf("d22fee"),
+                                    Color.white
+                            };
+                        }};
+                    }}
+            );
+
+            abilities.addAll(
+                    new DeathBirthAbility(MeldUnits.jilla, 3),
+                    new SpawnRushAbility()
+            );
+
+            constructor = LegsUnit::create;
+        }};
+
+        scorcher = new MeldUnitType("scorcher"){{
+            speed = 0.4f;
+
+            health = 200;
+            drownTimeMultiplier = 0.35f;
+
+            drag = 0.08f;
+            accel = 0.15f;
+            range = 40;
+
+            hitSize = 12;
+            rotateSpeed = 12;
+            faceTarget = true;
+
+            legCount = 4;
+            legLength = 10;
+            legMaxLength = 1.2f;
+            legGroupSize = 2;
+            legSpeed = 1;
+            legForwardScl = 2;
+            legBaseOffset = -1f;
+
+            drawCell = false;
+            legPhysicsLayer = false;
+
+
+            weapons.add(
+                new Weapon(Meld.prefix("scorcher-crystal")){{
+                    x = y = 0;
+                    mirror = alternate = rotate = false;
+                    reload = 14;
+
+                    shootCone = 15;
+                    recoil = 0;
+
+                    shootY = 8;
+                    continuous = alwaysContinuous = true;
+                    shootSound = Sounds.shootSublimate;
+                    parts.addAll(
+                            //TODO: wtf is this naming
+                            new RegionPart("-shine"){{
+                                outline = false;
+                                progress = PartProgress.warmup;
+                                color = Color.clear;
+                                colorTo = Color.white;
+                                blending = Blending.additive;
+                            }}
+                    );
+
+                    shootStatus = MeldStatusEffects.sentry;
+                    shootStatusDuration = 4;
+
+                    bullet = new ContinuousFlameBulletType(){{
+                        lifetime = 85;
+                        damage = 13;
+                        length = 35;
+                        width = 3.5f;
+                        knockback = 3;
+                        pierceCap = 3;
+                        flareLength = 8;
+                        rangeOverride = 55;
+                        recoil = -0.05f;
+                        hitUnder = true;
+
+                        colors = new Color[]{
+                                Color.valueOf("f9e1f343"),
+                                Color.valueOf("ee5de9a9"),
+                                Color.valueOf("ef85e3e3"),
+                                Color.valueOf("d22fee"),
+                                Color.white
+                        };
+                    }};
+                }}
+            );
+
+            constructor = LegsUnit::create;
+        }};
+
+        kathid = new MeldUnitType("kathid"){{
             shadowElevation = 0.1f;
             speed = 0.7f;
 
@@ -1283,6 +1647,17 @@ public class MeldUnits {
 
             deathExplosionEffect = Fx.none;
 
+            parts.addAll(
+                    new RegionPart(){{
+                        name = Meld.prefix("kathid-crystal-heat");
+                        progress = PartProgress.warmup;
+                        color = Color.valueOf("11111100");
+                        colorTo = Color.valueOf("111111");
+                        blending = Blending.additive;
+                        outline = false;
+                    }}
+            );
+
             weapons.addAll(
                     new Weapon(){{
                         x = y = 0;
@@ -1293,13 +1668,14 @@ public class MeldUnits {
                         shootCone = 10;
 
                         shootStatus = MeldStatusEffects.sentry;
-                        shootStatusDuration = 5;
+                        shootStatusDuration = 25;
                         shootSound = Sounds.shootSublimate;
 
                         bullet = new ContinuousFlameBulletType(){{
+                            lifetime = 25;
                             damage = 13;
                             flareLength = 12;
-                            length = 85;
+                            length = 115;
                             width = 1.7f;
                             knockback = 1;
                             pierceCap = 2;
@@ -1311,21 +1687,10 @@ public class MeldUnits {
                                     Color.valueOf("d22fee"),
                                     Color.white
                             };
-
-                            parts.addAll(
-                                    new RegionPart(){{
-                                        name = "kathid-crystal-heat";
-                                        progress = PartProgress.warmup;
-                                        color = Color.valueOf("11111100");
-                                        colorTo = Color.valueOf("111111");
-                                        blending = Blending.additive;
-                                        outline = false;
-                                    }}
-                            );
                         }};
                     }}
             );
-            immunities.addAll(MeldStatusEffects.aspectBurn);
+            immunities.addAll(MeldStatusEffects.lacerated);
 
             constructor = LegsUnit::create;
         }};
@@ -1467,41 +1832,6 @@ public class MeldUnits {
     }
 
     public static Weapon braigWeapon(float wx, float wy){
-        return new Weapon(Meld.prefix("braig-cannon")){{
-            x = wx;
-            y = wy;
-            shootY = 5;
-            reload = 360;
-            shootCone = 60;
-            rotate = true;
-            mirror = false;
-            alternate = false;
-            parentizeEffects = false;
-            shootStatus = MeldStatusEffects.sentry;
-            shootStatusDuration = 180;
-
-            shoot = new ShootSpread(){{
-                shots = 3;
-                shotDelay = 7;
-                spread = 1;
-            }};
-
-            inaccuracy = 5;
-
-            bullet = new BasicBulletType(){{
-                sprite = Meld.prefix("clump");
-                speed = 4;
-                lifetime = 75;
-                width = 10;
-                height = 12;
-                damage = 10;
-                splashDamage = 25;
-                splashDamageRadius = 25;
-                knockback = 6;
-                shootEffect = Fx.shootBig;
-                hitEffect = Fx.explosion;
-                impact = true;
-            }};
-        }};
+        return new BraigWeapon(wx, wy);
     }
 }

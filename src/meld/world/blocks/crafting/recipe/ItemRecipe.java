@@ -68,19 +68,19 @@ public class ItemRecipe extends Recipe<Block, Building>{
     }
 
     //Builder methods
-    public ItemRecipe input(ItemStack[] items){
+    public ItemRecipe input(ItemStack... items){
         inputItems = items;
         return this;
     }
-    public ItemRecipe output(ItemStack[] items){
+    public ItemRecipe output(ItemStack... items){
         outputItems = items;
         return this;
     }
-    public ItemRecipe input(LiquidStack[] liquids){
+    public ItemRecipe input(LiquidStack... liquids){
         inputLiquids = liquids;
         return this;
     }
-    public ItemRecipe output(LiquidStack[] liquids){
+    public ItemRecipe output(LiquidStack... liquids){
         outputLiquids = liquids;
         return this;
     }

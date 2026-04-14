@@ -4,12 +4,17 @@ import arc.graphics.Color;
 import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
+import meld.fluid.Aspect;
+import meld.fluid.AspectGroup;
 import mindustry.type.Liquid;
+
+import static meld.fluid.AspectGroup.*;
 
 public class MeldLiquids {
 
-    public static Liquid aether, aspect, meld, fumes,
-    pollutantMixture, boundAspect;
+    public static Aspect aether, aspect, meld, fumes,
+    pollutantMixture, boundAspect,
+    thunderingAether, stormingAspect;
 
     public static ObjectFloatMap<Liquid> aetherEfficiencies = new ObjectFloatMap<>();
     public static ObjectFloatMap<Liquid> aetherDensities = new ObjectFloatMap<>();
@@ -24,68 +29,108 @@ public class MeldLiquids {
     public float outletRatio = 10;
 
     public static void load(){
-        aether = new Liquid("aether"){{
+        aether = new Aspect("aether"){{
             gas = true;
             color = Color.valueOf("cb8650");
             temperature = 0.6f;
         }};
 
-        aspect = new Liquid("aspect"){{
-            gas = true;
-            flammability = 1;
-            explosiveness = 2;
-            color = Color.valueOf("cbdbfc");
-            temperature = 0.6f;
-        }};
-
-        meld = new Liquid("meld"){{
-            gas = true;
-            color = Color.valueOf("e4aad5");
-            temperature = 0.6f;
-        }};
-
-        fumes = new Liquid("fumes"){{
-            gas = true;
-            color = Color.valueOf("5b4739");
-            temperature = 0.6f;
-        }};
-
-        pollutantMixture = new Liquid("pollutant-mixture"){{
+        pollutantMixture = new Aspect("pollutant-mixture"){{
             gas = true;
             color = Color.valueOf("6a634d");
             temperature = 0.6f;
         }};
 
-        boundAspect = new Liquid("bound-aspect"){{
+        thunderingAether = new Aspect("thundering-aether"){{
+            gas = true;
+            color = Color.valueOf("f99b76");
+            temperature = 0.6f;
+            explosiveness = 0.1f;
+        }};
+
+        aspect = new Aspect("aspect"){{
+            gas = true;
+            flammability = 0.35f;
+            explosiveness = 1;
+            color = Color.valueOf("cbdbfc");
+            temperature = 0.6f;
+        }};
+
+        stormingAspect = new Aspect("storming-aspect"){{
+            gas = true;
+            color = Color.valueOf("aaadfd");
+            temperature = 0.6f;
+            flammability = 1;
+            explosiveness = 2;
+
+        }};
+
+        boundAspect = new Aspect("bound-aspect"){{
             gas = true;
             color = Color.valueOf("d7a9ef");
             temperature = 0.6f;
         }};
+        meld = new Aspect("meld"){{
+            gas = true;
+            color = Color.valueOf("e4aad5");
+            temperature = 0.6f;
+        }};
 
-        aetherEfficiencies.put(aether, 1);
-        aetherEfficiencies.put(pollutantMixture, 1);
+        fumes = new Aspect("fumes"){{
+            gas = true;
+            color = Color.valueOf("5b4739");
+            temperature = 0.6f;
+        }};
 
-        aetherDensities.put(aether, 1);
-        aetherDensities.put(pollutantMixture, 1/5f);
+        put(aether, AspectGroup.aether, new AspectStats(1, 1));
+        put(pollutantMixture, AspectGroup.aether, new AspectStats(1, 0.5f));
+        put(pollutantMixture, AspectGroup.aether, new AspectStats(1, 0.5f));
+        put(thunderingAether, AspectGroup.aether, new AspectStats(2, 0.5f));
 
-        aspectEfficiencies.put(aspect, 1);
-        aspectEfficiencies.put(boundAspect, 1);
+        put(aspect, AspectGroup.aspect, new AspectStats(1, 1));
+        put(boundAspect, AspectGroup.aspect, new AspectStats(1, 2));
+        put(stormingAspect, AspectGroup.aspect, new AspectStats(2, 1));
 
-        aspectDensities.put(aspect, 1);
-        aspectDensities.put(boundAspect, 2.5f);
+        put(fumes, AspectGroup.fumes, new AspectStats(1, 1));
+        put(pollutantMixture, AspectGroup.fumes, new AspectStats(1, 0.5f));
 
         outletMapping.putAll(
                 aether, aspect,
-                pollutantMixture, boundAspect
+                pollutantMixture, boundAspect,
+                thunderingAether, stormingAspect
         );
 
-        Seq<Liquid> outletLiquids = Seq.with(aether, pollutantMixture);
+        aetherEfficiencies.put(aether, 1);
+        aetherEfficiencies.put(pollutantMixture, 1);
+        aetherEfficiencies.put(thunderingAether, 2);
 
-        outletLiquids.each(liquid -> {
-            Liquid aspecti = outletMapping.get(liquid);
-            outletEfficiencies.put(liquid, aetherEfficiencies.get(liquid, 1) * aspectEfficiencies.get(aspecti, 1));
-            outletDensities.put(liquid, aetherDensities.get(liquid, 1) * aspectDensities.get(aspecti, 1));
-        });
+        aetherDensities.put(aether, 1);
+        aetherDensities.put(pollutantMixture, 1/5f);
+        aetherDensities.put(thunderingAether, 0.5f);
 
+        aspectEfficiencies.put(aspect, 1);
+        aspectEfficiencies.put(boundAspect, 1);
+        aspectEfficiencies.put(stormingAspect, 2);
+
+        aspectDensities.put(aspect, 1);
+        aspectDensities.put(boundAspect, 2.5f);
+        aspectDensities.put(stormingAspect, 1f);
+
+        aether.databaseTag = pollutantMixture.databaseTag = thunderingAether.databaseTag =
+        aspect.databaseTag = boundAspect.databaseTag = stormingAspect.databaseTag = "aspect-powergen";
+        meld.databaseTag = "aspect-omnipotence";
+        fumes.databaseTag = "aspect-vita";
+
+        mapOutlet(aether, aspect);
+        mapOutlet(pollutantMixture, boundAspect);
+        mapOutlet(thunderingAether, stormingAspect);
+    }
+
+    public static void mapOutlet(Liquid input, Liquid output){
+        outletMapping.putAll(input, output);
+
+        outletEfficiencies.put(input, aetherEfficiencies.get(input, 1) * aspectEfficiencies.get(output, 1));
+
+        outletDensities.put(input, aetherDensities.get(input, 1) * aspectDensities.get(output, 1));
     }
 }

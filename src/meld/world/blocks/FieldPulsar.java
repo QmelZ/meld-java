@@ -51,6 +51,8 @@ public class FieldPulsar extends Block {
     public FieldPulsar(String name) {
         super(name);
         update = true;
+        solid = true;
+
         warmupSpeed = 1/60f;
 
         pulseDuration = 240;
